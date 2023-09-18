@@ -109,7 +109,7 @@ struct FrameIndexExpr {
   const DIExpression *Expr;
 
   /// Operator enabling sorting based on fragment offset.
-  bool operator<(const FrameIndexExpr &Other) const;
+  friend bool operator<(const FrameIndexExpr &LHS, const FrameIndexExpr &RHS);
 };
 
 /// Represents an entry-value location, or a fragment of one.
@@ -118,7 +118,7 @@ struct EntryValueInfo {
   const DIExpression &Expr;
 
   /// Operator enabling sorting based on fragment offset.
-  bool operator<(const EntryValueInfo &Other) const;
+  friend bool operator<(const EntryValueInfo &LHS, const EntryValueInfo &RHS);
 };
 
 // Namespace for alternatives of a DbgVariable.

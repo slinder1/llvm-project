@@ -262,12 +262,13 @@ static uint64_t getFragmentOffsetInBits(const DIExpression &Expr) {
   return Fragment ? Fragment->OffsetInBits : 0;
 }
 
-bool FrameIndexExpr::operator<(const FrameIndexExpr &Other) const {
-  return getFragmentOffsetInBits(*Expr) < getFragmentOffsetInBits(*Other.Expr);
+bool llvm::operator<(const FrameIndexExpr &LHS, const FrameIndexExpr &RHS) {
+  return getFragmentOffsetInBits(*LHS.Expr) <
+         getFragmentOffsetInBits(*RHS.Expr);
 }
 
-bool EntryValueInfo::operator<(const EntryValueInfo &Other) const {
-  return getFragmentOffsetInBits(Expr) < getFragmentOffsetInBits(Other.Expr);
+bool llvm::operator<(const EntryValueInfo &LHS, const EntryValueInfo &RHS) {
+  return getFragmentOffsetInBits(LHS.Expr) < getFragmentOffsetInBits(RHS.Expr);
 }
 
 Loc::Single::Single(DbgValueLoc ValueLoc)
