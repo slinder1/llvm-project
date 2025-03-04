@@ -1092,6 +1092,8 @@ DbgInstPtr DIBuilder::insertDbgAssign(Instruction *LinkedInstr, Value *Val,
       LinkedInstr->getMetadata(LLVMContext::MD_DIAssignID));
   assert(Link && "Linked instruction must have DIAssign metadata attached");
 
+  if (ValExpr) ValExpr->markActuallyUsed();
+  if (AddrExpr) AddrExpr->markActuallyUsed();
   DbgVariableRecord *DVR = DbgVariableRecord::createDVRAssign(
       Val, SrcVar, ValExpr, Link, Addr, AddrExpr, DL);
   // Insert after LinkedInstr.
@@ -1134,6 +1136,7 @@ DbgInstPtr DIBuilder::insertDeclare(Value *Storage, DILocalVariable *VarInfo,
              VarInfo->getScope()->getSubprogram() &&
          "Expected matching subprograms");
 
+  if (Expr) Expr->markActuallyUsed();
   DbgVariableRecord *DVR =
       DbgVariableRecord::createDVRDeclare(Storage, VarInfo, Expr, DL);
   insertDbgVariableRecord(DVR, InsertPt);
@@ -1168,6 +1171,7 @@ Instruction *DIBuilder::insertDbgIntrinsic(llvm::Function *IntrinsicFn,
 
   trackIfUnresolved(VarInfo);
   trackIfUnresolved(Expr);
+  if (Expr) Expr->markActuallyUsed();
   Value *Args[] = {getDbgIntrinsicValueImpl(VMContext, V),
                    MetadataAsValue::get(VMContext, VarInfo),
                    MetadataAsValue::get(VMContext, Expr)};

@@ -3301,7 +3301,13 @@ class DIExpression : public MDNode {
   friend class MDNode;
 
   std::vector<uint64_t> Elements;
+  mutable bool ActuallyUsed = false;
 
+public:
+  void markActuallyUsed() const { ActuallyUsed = true; }
+  bool getActuallyUsed() const { return ActuallyUsed; }
+
+private:
   DIExpression(LLVMContext &C, StorageType Storage, ArrayRef<uint64_t> Elements)
       : MDNode(C, DIExpressionKind, Storage, {}),
         Elements(Elements.begin(), Elements.end()) {}

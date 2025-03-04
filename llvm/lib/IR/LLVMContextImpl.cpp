@@ -24,8 +24,13 @@
 #include "llvm/Remarks/RemarkStreamer.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 #include <cassert>
 #include <utility>
+
+#include <sys/time.h>
+#include <sys/resource.h>
 
 using namespace llvm;
 
@@ -41,6 +46,39 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
       Int64Ty(C, 64), Int128Ty(C, 128) {}
 
 LLVMContextImpl::~LLVMContextImpl() {
+  const char *Root = getenv("DIEXPR_BENCH_ROOT");
+  if (!Root) {
+    errs() << "must define DIEXPR_BENCH_ROOT\n";
+    exit(1);
+  }
+  SmallString<128> Model(Root);
+  sys::path::append(Model, "tmp/%%%%%%%%%%");
+  auto TempOrError =
+      sys::fs::TempFile::create(Model, sys::fs::all_read | sys::fs::all_write);
+  if (!TempOrError) {
+    errs() << "could not create TempFile " << Model << '\n';
+    logAllUnhandledErrors(TempOrError.takeError(), errs());
+    exit(2);
+  }
+  sys::fs::TempFile Temp = std::move(*TempOrError);
+  assert(Temp.FD != -1);
+  raw_fd_ostream OS{Temp.FD, false};
+  struct rusage RUsage;
+  getrusage(RUSAGE_SELF, &RUsage);
+  for (DIExpression *Expr : DIExpressions) {
+    auto NumOps = std::distance(Expr->expr_op_begin(), Expr->expr_op_end());
+    OS << Expr->getActuallyUsed() << ':' << NumOps << ':'
+       << Expr->getNumElements() << ':' << RUsage.ru_maxrss << ':';
+    Expr->print(OS);
+    OS << '\n';
+  }
+  OS.flush();
+  auto Err = Temp.keep();
+  if (Err) {
+    errs() << "could not keep TempFile\n";
+    logAllUnhandledErrors(std::move(Err), errs());
+    exit(3);
+  }
 #ifndef NDEBUG
   // Check that any variable location records that fell off the end of a block
   // when it's terminator was removed were eventually replaced. This assertion

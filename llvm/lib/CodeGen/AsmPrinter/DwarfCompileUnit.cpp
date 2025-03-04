@@ -292,6 +292,7 @@ void DwarfCompileUnit::addLocationAttribute(
         unsigned LocalNVPTXAddressSpace;
         const DIExpression *NewExpr =
             DIExpression::extractAddressClass(Expr, LocalNVPTXAddressSpace);
+      NewExpr->markActuallyUsed();
         if (NewExpr != Expr) {
           Expr = NewExpr;
           NVPTXAddressSpace = LocalNVPTXAddressSpace;
@@ -950,6 +951,7 @@ void DwarfCompileUnit::applyConcreteDbgVariableAttributes(const Loc::MMI &MMI,
       unsigned LocalNVPTXAddressSpace;
       const DIExpression *NewExpr =
           DIExpression::extractAddressClass(Expr, LocalNVPTXAddressSpace);
+      NewExpr->markActuallyUsed();
       if (NewExpr != Expr) {
         Expr = NewExpr;
         NVPTXAddressSpace = LocalNVPTXAddressSpace;

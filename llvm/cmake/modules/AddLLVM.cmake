@@ -2567,11 +2567,11 @@ function(llvm_setup_rpath name)
   # On AIX, the tool chain doesn't support modifying rpaths/libpaths for XCOFF
   # on install at the moment, so BUILD_WITH_INSTALL_RPATH is required.
   if("${CMAKE_BUILD_RPATH}" STREQUAL "")
-    if("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin|AIX")
+    #if("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin|AIX")
       set_property(TARGET ${name} PROPERTY BUILD_WITH_INSTALL_RPATH ON)
-    else()
-      set_property(TARGET ${name} APPEND PROPERTY BUILD_RPATH "${_build_rpath}")
-    endif()
+      #else()
+      #set_property(TARGET ${name} APPEND PROPERTY BUILD_RPATH "${_build_rpath}")
+      #endif()
   endif()
 
   set_target_properties(${name} PROPERTIES

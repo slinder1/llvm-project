@@ -239,6 +239,7 @@ const DIType *DbgVariable::getType() const {
 static DbgValueLoc getDebugLocValue(const MachineInstr *MI) {
   const DIExpression *Expr = MI->getDebugExpression();
   auto SingleLocExprOpt = DIExpression::convertToNonVariadicExpression(Expr);
+  if (SingleLocExprOpt) (**SingleLocExprOpt).markActuallyUsed();
   const bool IsVariadic = !SingleLocExprOpt;
   // If we have a variadic debug value instruction that is equivalent to a
   // non-variadic instruction, then convert it to non-variadic form here.
@@ -599,6 +600,7 @@ static const DIExpression *combineDIExpressions(const DIExpression *Original,
     llvm::erase(Elts, dwarf::DW_OP_stack_value);
   const DIExpression *CombinedExpr =
       (Elts.size() > 0) ? DIExpression::append(Original, Elts) : Original;
+  CombinedExpr->markActuallyUsed();
   return CombinedExpr;
 }
 
@@ -870,6 +872,7 @@ static void collectCallSiteParameters(const MachineInstr *CallMI,
     // Create an expression where the register's entry value is used.
     DIExpression *EntryExpr = DIExpression::get(
         MF->getFunction().getContext(), {dwarf::DW_OP_LLVM_entry_value, 1});
+    EntryExpr->markActuallyUsed();
     for (auto &RegEntry : ForwardedRegWorklist) {
       MachineLocation MLoc(RegEntry.first);
       finishCallSiteParams(MLoc, EntryExpr, RegEntry.second, Params);

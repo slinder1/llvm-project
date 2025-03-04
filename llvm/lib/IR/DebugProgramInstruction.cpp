@@ -66,7 +66,9 @@ DbgVariableRecord::DbgVariableRecord(Metadata *Location, DILocalVariable *DV,
                                      DIExpression *Expr, const DILocation *DI,
                                      LocationType Type)
     : DbgRecord(ValueKind, DI), DebugValueUser({Location, nullptr, nullptr}),
-      Type(Type), Variable(DV), Expression(Expr) {}
+      Type(Type), Variable(DV), Expression(Expr) {
+        if (Expression) Expression->markActuallyUsed();
+      }
 
 DbgVariableRecord::DbgVariableRecord(Metadata *Value, DILocalVariable *Variable,
                                      DIExpression *Expression,
@@ -75,7 +77,10 @@ DbgVariableRecord::DbgVariableRecord(Metadata *Value, DILocalVariable *Variable,
                                      const DILocation *DI)
     : DbgRecord(ValueKind, DI), DebugValueUser({Value, Address, AssignID}),
       Type(LocationType::Assign), Variable(Variable), Expression(Expression),
-      AddressExpression(AddressExpression) {}
+      AddressExpression(AddressExpression) {
+        if (Expression) Expression->markActuallyUsed();
+        if (AddressExpression) AddressExpression->markActuallyUsed();
+      }
 
 void DbgRecord::deleteRecord() {
   switch (RecordKind) {
@@ -756,4 +761,8 @@ iterator_range<simple_ilist<DbgRecord>::iterator> DbgMarker::cloneDebugInfoFrom(
     return {First->getIterator(), StoredDbgRecords.end()};
 }
 
+void DbgVariableRecord::setExpression(DIExpression *NewExpr) {
+  if (NewExpr) NewExpr->markActuallyUsed();
+  Expression = NewExpr;
+}
 } // end namespace llvm

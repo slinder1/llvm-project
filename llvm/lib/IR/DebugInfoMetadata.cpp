@@ -42,6 +42,13 @@ LLVM_ABI cl::opt<bool> PickMergedSourceLocations(
     cl::desc("Preserve line and column number when merging locations."));
 } // namespace llvm
 
+static void markActuallyUsed(Metadata *Expr) {
+  if (!Expr || !isa<DIExpression>(Expr))
+    return;
+  auto *E = cast<DIExpression>(Expr);
+  E->markActuallyUsed();
+}
+
 uint32_t DIType::getAlignInBits() const {
   return (getTag() == dwarf::DW_TAG_LLVM_ptrauth_type ? 0 : SubclassData32);
 }
@@ -736,6 +743,10 @@ DIGenericSubrange *DIGenericSubrange::getImpl(LLVMContext &Context,
                                               Metadata *UB, Metadata *Stride,
                                               StorageType Storage,
                                               bool ShouldCreate) {
+  markActuallyUsed(CountNode);
+  markActuallyUsed(LB);
+  markActuallyUsed(UB);
+  markActuallyUsed(Stride);
   DEFINE_GETIMPL_LOOKUP(DIGenericSubrange, (CountNode, LB, UB, Stride));
   Metadata *Ops[] = {CountNode, LB, UB, Stride};
   DEFINE_GETIMPL_STORE_NO_CONSTRUCTOR_ARGS(DIGenericSubrange, Ops);
@@ -942,6 +953,8 @@ DIStringType *DIStringType::getImpl(LLVMContext &Context, unsigned Tag,
                                     Metadata *SizeInBits, uint32_t AlignInBits,
                                     unsigned Encoding, StorageType Storage,
                                     bool ShouldCreate) {
+  markActuallyUsed(StringLengthExp);
+  markActuallyUsed(StringLocationExp);
   assert(isCanonical(Name) && "Expected canonical MDString");
   DEFINE_GETIMPL_LOOKUP(DIStringType,
                         (Tag, Name, StringLength, StringLengthExp,
@@ -1020,6 +1033,10 @@ DICompositeType *DICompositeType::getImpl(
     Metadata *Allocated, Metadata *Rank, Metadata *Annotations,
     Metadata *Specification, uint32_t NumExtraInhabitants, Metadata *BitStride,
     StorageType Storage, bool ShouldCreate) {
+  markActuallyUsed(DataLocation);
+  markActuallyUsed(Associated);
+  markActuallyUsed(Allocated);
+  markActuallyUsed(Rank);
   assert(isCanonical(Name) && "Expected canonical MDString");
 
   // Keep this in sync with buildODRType.
@@ -2517,6 +2534,7 @@ DIGlobalVariableExpression *
 DIGlobalVariableExpression::getImpl(LLVMContext &Context, Metadata *Variable,
                                     Metadata *Expression, StorageType Storage,
                                     bool ShouldCreate) {
+  markActuallyUsed(Expression);
   DEFINE_GETIMPL_LOOKUP(DIGlobalVariableExpression, (Variable, Expression));
   Metadata *Ops[] = {Variable, Expression};
   DEFINE_GETIMPL_STORE_NO_CONSTRUCTOR_ARGS(DIGlobalVariableExpression, Ops);

@@ -328,6 +328,7 @@ public:
   }
 
   void setExpression(DIExpression *NewExpr) {
+    if (NewExpr) NewExpr->markActuallyUsed();
     setArgOperand(2, MetadataAsValue::get(NewExpr->getContext(), NewExpr));
   }
 

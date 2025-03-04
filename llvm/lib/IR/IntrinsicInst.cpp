@@ -185,6 +185,7 @@ void DbgVariableIntrinsic::addVariableLocationOps(ArrayRef<Value *> NewValues,
          "NewExpr for debug variable intrinsic does not reference every "
          "location operand.");
   assert(!is_contained(NewValues, nullptr) && "New values must be non-null");
+  if (NewExpr) NewExpr->markActuallyUsed();
   setArgOperand(2, MetadataAsValue::get(getContext(), NewExpr));
   SmallVector<ValueAsMetadata *, 4> MDs;
   for (auto *VMD : location_ops())

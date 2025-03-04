@@ -181,6 +181,10 @@ struct EntryValue {
     std::optional<const DIExpression *> NonVariadicExpr =
         DIExpression::convertToNonVariadicExpression(&Expr);
     assert(NonVariadicExpr && *NonVariadicExpr);
+    // This isn't really necessary, if e.g. EntryValues worked in terms of a
+    // DIExprRef then there would be no need to have the extra DIExpression
+    // with a prefix dropped
+    (**NonVariadicExpr).markActuallyUsed();
 
     EntryValues.insert({Reg, **NonVariadicExpr});
   }

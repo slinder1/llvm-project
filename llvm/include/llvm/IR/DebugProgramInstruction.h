@@ -455,7 +455,7 @@ public:
   DILocalVariable *getVariable() const { return Variable.get(); };
   MDNode *getRawVariable() const { return Variable.getAsMDNode(); }
 
-  void setExpression(DIExpression *NewExpr) { Expression = NewExpr; }
+  void setExpression(DIExpression *NewExpr);
   DIExpression *getExpression() const { return Expression.get(); }
   MDNode *getRawExpression() const { return Expression.getAsMDNode(); }
 
