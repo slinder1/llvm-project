@@ -8,7 +8,7 @@ declare hidden void @void_func_i32_inreg(i32 inreg)
 ; ERR: error: <unknown>:0:0: in function tail_call_i32_inreg_divergent void (i32): illegal VGPR to SGPR copy
 ; ERR: error: <unknown>:0:0: in function indirect_tail_call_i32_inreg_divergent void (i32): illegal VGPR to SGPR copy
 
-define void @tail_call_i32_inreg_divergent(i32 %vgpr) {
+define void @tail_call_i32_inreg_divergent(i32 %vgpr) #0 {
 ; CHECK-LABEL: tail_call_i32_inreg_divergent:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
@@ -26,8 +26,8 @@ define void @tail_call_i32_inreg_divergent(i32 %vgpr) {
 ; CHECK-NEXT:    s_addc_u32 s17, s17, void_func_i32_inreg@rel32@hi+12
 ; CHECK-NEXT:     ; illegal copy v0 to s0
 ; CHECK-NEXT:    s_swappc_b64 s[30:31], s[16:17]
-; CHECK-NEXT:    v_readlane_b32 s31, v40, 1
 ; CHECK-NEXT:    v_readlane_b32 s30, v40, 0
+; CHECK-NEXT:    v_readlane_b32 s31, v40, 1
 ; CHECK-NEXT:    s_mov_b32 s32, s33
 ; CHECK-NEXT:    v_readlane_b32 s4, v40, 2
 ; CHECK-NEXT:    s_or_saveexec_b64 s[6:7], -1
@@ -42,7 +42,7 @@ define void @tail_call_i32_inreg_divergent(i32 %vgpr) {
 
 @constant = external hidden addrspace(4) constant ptr
 
-define void @indirect_tail_call_i32_inreg_divergent(i32 %vgpr) {
+define void @indirect_tail_call_i32_inreg_divergent(i32 %vgpr) #0 {
 ; CHECK-LABEL: indirect_tail_call_i32_inreg_divergent:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
@@ -62,8 +62,8 @@ define void @indirect_tail_call_i32_inreg_divergent(i32 %vgpr) {
 ; CHECK-NEXT:     ; illegal copy v0 to s0
 ; CHECK-NEXT:    s_waitcnt lgkmcnt(0)
 ; CHECK-NEXT:    s_swappc_b64 s[30:31], s[16:17]
-; CHECK-NEXT:    v_readlane_b32 s31, v40, 1
 ; CHECK-NEXT:    v_readlane_b32 s30, v40, 0
+; CHECK-NEXT:    v_readlane_b32 s31, v40, 1
 ; CHECK-NEXT:    s_mov_b32 s32, s33
 ; CHECK-NEXT:    v_readlane_b32 s4, v40, 2
 ; CHECK-NEXT:    s_or_saveexec_b64 s[6:7], -1
@@ -76,3 +76,5 @@ define void @indirect_tail_call_i32_inreg_divergent(i32 %vgpr) {
   tail call void %fptr(i32 inreg %vgpr)
   ret void
 }
+
+attributes #0 = { nounwind }
