@@ -15,31 +15,50 @@
 
 using namespace llvm;
 
+static_assert((dwarf::DW_OP_LLVM_lo >> 4) == (dwarf::DW_OP_hi_user + 1));
+static_assert((dwarf::DW_OP_LLVM_hi - dwarf::DW_OP_LLVM_lo) < 0xff);
+
+static constexpr size_t ExprOpCount = 0x1ff + 1;
+static constexpr unsigned ExprOpKnownMask = 0x10ff;
+static constexpr unsigned ExprOpUnknownMask = ~ExprOpKnownMask;
+
+static constexpr bool isUnknownOp(unsigned Op) {
+  return Op & ExprOpUnknownMask;
+}
+
+static constexpr unsigned indexOf(unsigned Op) {
+  unsigned HighBit = (Op & dwarf::DW_OP_LLVM_lo) >> 4;
+  return HighBit | (Op & 0xff);
+}
+
+static constexpr std::array<uint8_t, ExprOpCount> getExprSizeMap() {
+  std::array<uint8_t, ExprOpCount> Ret = {};
+  for (size_t I = 0; I < ExprOpCount; ++I)
+    Ret[I] = 1u;
+  for (unsigned I = dwarf::DW_OP_breg0; I <= dwarf::DW_OP_breg31; ++I)
+    Ret[indexOf(I)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_constu)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_consts)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_deref_size)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_plus_uconst)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_LLVM_tag_offset)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_LLVM_entry_value)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_LLVM_arg)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_regx)] = 2u;
+  Ret[indexOf(dwarf::DW_OP_LLVM_convert)] = 3u;
+  Ret[indexOf(dwarf::DW_OP_LLVM_fragment)] = 3u;
+  Ret[indexOf(dwarf::DW_OP_LLVM_extract_bits_sext)] = 3u;
+  Ret[indexOf(dwarf::DW_OP_LLVM_extract_bits_zext)] = 3u;
+  Ret[indexOf(dwarf::DW_OP_bregx)] = 3u;
+  return Ret;
+}
+
+static constexpr std::array<uint8_t, ExprOpCount> ExprSizeMap =
+    getExprSizeMap();
+
 unsigned ExprOperand::getSize() const {
   uint64_t Op = getOp();
-
-  if (Op >= dwarf::DW_OP_breg0 && Op <= dwarf::DW_OP_breg31)
-    return 2;
-
-  switch (Op) {
-  case dwarf::DW_OP_LLVM_convert:
-  case dwarf::DW_OP_LLVM_fragment:
-  case dwarf::DW_OP_LLVM_extract_bits_sext:
-  case dwarf::DW_OP_LLVM_extract_bits_zext:
-  case dwarf::DW_OP_bregx:
-    return 3;
-  case dwarf::DW_OP_constu:
-  case dwarf::DW_OP_consts:
-  case dwarf::DW_OP_deref_size:
-  case dwarf::DW_OP_plus_uconst:
-  case dwarf::DW_OP_LLVM_tag_offset:
-  case dwarf::DW_OP_LLVM_entry_value:
-  case dwarf::DW_OP_LLVM_arg:
-  case dwarf::DW_OP_regx:
-    return 2;
-  default:
-    return 1;
-  }
+  return isUnknownOp(Op) ? 1u : ExprSizeMap[indexOf(Op)];
 }
 
 void llvm::appendOffsetImpl(SmallVectorImpl<uint64_t> &Ops, int64_t Offset) {
