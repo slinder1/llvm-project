@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DbgVariableFragmentInfo.h"
 #include "llvm/IR/Metadata.h"
@@ -3431,7 +3432,32 @@ public:
     /// Return the size of the operand.
     ///
     /// Return the number of elements in the operand (1 + args).
-    LLVM_ABI unsigned getSize() const;
+    LLVM_ABI unsigned getSize() const {
+      uint64_t Op = getOp();
+
+      if (Op >= dwarf::DW_OP_breg0 && Op <= dwarf::DW_OP_breg31)
+        return 2;
+
+      switch (Op) {
+      case dwarf::DW_OP_LLVM_convert:
+      case dwarf::DW_OP_LLVM_fragment:
+      case dwarf::DW_OP_LLVM_extract_bits_sext:
+      case dwarf::DW_OP_LLVM_extract_bits_zext:
+      case dwarf::DW_OP_bregx:
+        return 3;
+      case dwarf::DW_OP_constu:
+      case dwarf::DW_OP_consts:
+      case dwarf::DW_OP_deref_size:
+      case dwarf::DW_OP_plus_uconst:
+      case dwarf::DW_OP_LLVM_tag_offset:
+      case dwarf::DW_OP_LLVM_entry_value:
+      case dwarf::DW_OP_LLVM_arg:
+      case dwarf::DW_OP_regx:
+        return 2;
+      default:
+        return 1;
+      }
+    }
 
     /// Append the elements of this operand to \p V.
     void appendToVector(SmallVectorImpl<uint64_t> &V) const {
