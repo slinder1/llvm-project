@@ -14,6 +14,7 @@
 #if !(defined HANDLE_DW_TAG || defined HANDLE_DW_AT ||                         \
       defined HANDLE_DW_FORM || defined HANDLE_DW_OP ||                        \
       defined HANDLE_DW_OP_LLVM_USEROP || defined HANDLE_DW_LANG ||            \
+      defined HANDLE_DW_OP_LLVM_INTERNAL ||                                    \
       defined HANDLE_DW_LNAME || defined HANDLE_DW_ATE ||                      \
       defined HANDLE_DW_VIRTUALITY || defined HANDLE_DW_DEFAULTED ||           \
       defined HANDLE_DW_CC || defined HANDLE_DW_LNS ||                         \
@@ -54,6 +55,10 @@
 
 #ifndef HANDLE_DW_OP
 #define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)
+#endif
+
+#ifndef HANDLE_DW_OP_LLVM_INTERNAL
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)
 #endif
 
 #ifndef HANDLE_DW_OP_LLVM_USEROP
@@ -957,6 +962,15 @@ HANDLE_DW_OP_LLVM_USEROP(0x000a, piece_end)
 HANDLE_DW_OP_LLVM_USEROP(0x000b, extend)
 HANDLE_DW_OP_LLVM_USEROP(0x000c, select_bit_piece)
 
+HANDLE_DW_OP_LLVM_INTERNAL(0x1000, fragment, 2, 0)
+HANDLE_DW_OP_LLVM_INTERNAL(0x1001, convert, 2, 1)
+HANDLE_DW_OP_LLVM_INTERNAL(0x1002, tag_offset, 1, 0)
+HANDLE_DW_OP_LLVM_INTERNAL(0x1003, entry_value, 1, 0)
+HANDLE_DW_OP_LLVM_INTERNAL(0x1004, implicit_pointer, 0, 1)
+HANDLE_DW_OP_LLVM_INTERNAL(0x1005, arg, 1, 0)
+HANDLE_DW_OP_LLVM_INTERNAL(0x1006, extract_bits_sext, 2, 1)
+HANDLE_DW_OP_LLVM_INTERNAL(0x1007, extract_bits_zext, 2, 1)
+
 // DWARF languages.
 HANDLE_DW_LANG(0x0001, C89, 0, 2, DWARF)
 HANDLE_DW_LANG(0x0002, C, 0, 2, DWARF)
@@ -1402,6 +1416,7 @@ HANDLE_DW_SECT(8, RNGLISTS)
 #undef HANDLE_DW_FORM
 #undef HANDLE_DW_OP
 #undef HANDLE_DW_OP_LLVM_USEROP
+#undef HANDLE_DW_OP_LLVM_INTERNAL
 #undef HANDLE_DW_LANG
 #undef HANDLE_DW_LNAME
 #undef HANDLE_DW_ATE
