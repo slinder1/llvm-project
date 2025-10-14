@@ -18,6 +18,12 @@
 using namespace llvm;
 using namespace dwarf;
 
+#define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)               \
+  static_assert(ID >= 0x0 && ID <= 0xff);
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)                  \
+  static_assert(ID >= 0x1000 && ID <= 0x10ff);
+#include "llvm/BinaryFormat/Dwarf.def"
+
 StringRef llvm::dwarf::TagString(unsigned Tag) {
   switch (Tag) {
   default:
@@ -142,23 +148,10 @@ StringRef llvm::dwarf::OperationEncodingString(unsigned Encoding) {
 #define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)               \
   case DW_OP_##NAME:                                                           \
     return "DW_OP_" #NAME;
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)                  \
+  case DW_OP_LLVM_##NAME:                                                      \
+    return "DW_OP_LLVM_" #NAME;
 #include "llvm/BinaryFormat/Dwarf.def"
-  case DW_OP_LLVM_convert:
-    return "DW_OP_LLVM_convert";
-  case DW_OP_LLVM_fragment:
-    return "DW_OP_LLVM_fragment";
-  case DW_OP_LLVM_tag_offset:
-    return "DW_OP_LLVM_tag_offset";
-  case DW_OP_LLVM_entry_value:
-    return "DW_OP_LLVM_entry_value";
-  case DW_OP_LLVM_implicit_pointer:
-    return "DW_OP_LLVM_implicit_pointer";
-  case DW_OP_LLVM_arg:
-    return "DW_OP_LLVM_arg";
-  case DW_OP_LLVM_extract_bits_sext:
-    return "DW_OP_LLVM_extract_bits_sext";
-  case DW_OP_LLVM_extract_bits_zext:
-    return "DW_OP_LLVM_extract_bits_zext";
   }
 }
 
@@ -166,15 +159,9 @@ unsigned llvm::dwarf::getOperationEncoding(StringRef OperationEncodingString) {
   return StringSwitch<unsigned>(OperationEncodingString)
 #define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)               \
   .Case("DW_OP_" #NAME, DW_OP_##NAME)
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)                  \
+  .Case("DW_OP_LLVM_" #NAME, DW_OP_LLVM_##NAME)
 #include "llvm/BinaryFormat/Dwarf.def"
-      .Case("DW_OP_LLVM_convert", DW_OP_LLVM_convert)
-      .Case("DW_OP_LLVM_fragment", DW_OP_LLVM_fragment)
-      .Case("DW_OP_LLVM_tag_offset", DW_OP_LLVM_tag_offset)
-      .Case("DW_OP_LLVM_entry_value", DW_OP_LLVM_entry_value)
-      .Case("DW_OP_LLVM_implicit_pointer", DW_OP_LLVM_implicit_pointer)
-      .Case("DW_OP_LLVM_arg", DW_OP_LLVM_arg)
-      .Case("DW_OP_LLVM_extract_bits_sext", DW_OP_LLVM_extract_bits_sext)
-      .Case("DW_OP_LLVM_extract_bits_zext", DW_OP_LLVM_extract_bits_zext)
       .Default(0);
 }
 

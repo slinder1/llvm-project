@@ -1663,31 +1663,31 @@ DIAssignID *DIAssignID::getImpl(LLVMContext &Context, StorageType Storage,
   return storeImpl(new (0u, Storage) DIAssignID(Context, Storage), Storage);
 }
 
+using OpSizeLookupT = std::array<uint8_t, dwarf::OpLookupSize>;
+static constexpr OpSizeLookupT makeOpSizeLookup() {
+  auto OperandsToSize = [](int64_t Operands) -> uint8_t {
+    if (Operands < 0)
+      return 1;
+    assert(Operands < std::numeric_limits<uint8_t>::max() - 1);
+    return static_cast<uint8_t>(Operands) + 1;
+  };
+  OpSizeLookupT Ret = {};
+  for (size_t I = 0; I < dwarf::OpLookupSize; ++I)
+    Ret[I] = 1;
+#define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)               \
+  Ret[dwarf::getOpLookupIndex(ID)] = OperandsToSize(OPERANDS);
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)                  \
+  Ret[dwarf::getOpLookupIndex(ID)] = OperandsToSize(OPERANDS);
+#include "llvm/BinaryFormat/Dwarf.def"
+  return Ret;
+}
+static constexpr OpSizeLookupT OpSizeLookup = makeOpSizeLookup();
+
 unsigned DIExpression::ExprOperand::getSize() const {
   uint64_t Op = getOp();
-
-  if (Op >= dwarf::DW_OP_breg0 && Op <= dwarf::DW_OP_breg31)
-    return 2;
-
-  switch (Op) {
-  case dwarf::DW_OP_LLVM_convert:
-  case dwarf::DW_OP_LLVM_fragment:
-  case dwarf::DW_OP_LLVM_extract_bits_sext:
-  case dwarf::DW_OP_LLVM_extract_bits_zext:
-  case dwarf::DW_OP_bregx:
-    return 3;
-  case dwarf::DW_OP_constu:
-  case dwarf::DW_OP_consts:
-  case dwarf::DW_OP_deref_size:
-  case dwarf::DW_OP_plus_uconst:
-  case dwarf::DW_OP_LLVM_tag_offset:
-  case dwarf::DW_OP_LLVM_entry_value:
-  case dwarf::DW_OP_LLVM_arg:
-  case dwarf::DW_OP_regx:
-    return 2;
-  default:
-    return 1;
-  }
+  if (dwarf::hasOpLookupIndex(Op))
+    return OpSizeLookup[dwarf::getOpLookupIndex(Op)];
+  return 1;
 }
 
 bool DIExpression::isValid() const {

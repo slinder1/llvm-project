@@ -138,18 +138,25 @@ enum Form : uint16_t {
 enum LocationAtom {
 #define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)               \
   DW_OP_##NAME = ID,
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)                  \
+  DW_OP_LLVM_##NAME = ID,
 #include "llvm/BinaryFormat/Dwarf.def"
   DW_OP_lo_user = 0xe0,
   DW_OP_hi_user = 0xff,
-  DW_OP_LLVM_fragment = 0x1000,          ///< Only used in LLVM metadata.
-  DW_OP_LLVM_convert = 0x1001,           ///< Only used in LLVM metadata.
-  DW_OP_LLVM_tag_offset = 0x1002,        ///< Only used in LLVM metadata.
-  DW_OP_LLVM_entry_value = 0x1003,       ///< Only used in LLVM metadata.
-  DW_OP_LLVM_implicit_pointer = 0x1004,  ///< Only used in LLVM metadata.
-  DW_OP_LLVM_arg = 0x1005,               ///< Only used in LLVM metadata.
-  DW_OP_LLVM_extract_bits_sext = 0x1006, ///< Only used in LLVM metadata.
-  DW_OP_LLVM_extract_bits_zext = 0x1007, ///< Only used in LLVM metadata.
 };
+
+static constexpr size_t OpLookupSize = 0x1ff + 1;
+static constexpr uint64_t OpLookupHasEntryMask = 0x10ff;
+
+static constexpr bool hasOpLookupIndex(uint64_t Op) {
+  return !(Op & ~OpLookupHasEntryMask);
+}
+
+static constexpr size_t getOpLookupIndex(uint64_t Op) {
+  assert(hasOpLookupIndex(Op));
+  size_t HighBit = (Op & 0x1000) >> 4;
+  return HighBit | (Op & 0xff);
+}
 
 enum LlvmUserLocationAtom {
 #define HANDLE_DW_OP_LLVM_USEROP(ID, NAME) DW_OP_LLVM_##NAME = ID,
