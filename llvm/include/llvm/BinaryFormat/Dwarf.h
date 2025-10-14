@@ -138,17 +138,11 @@ enum Form : uint16_t {
 enum LocationAtom {
 #define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)               \
   DW_OP_##NAME = ID,
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)                  \
+  DW_OP_LLVM_##NAME = ID,
 #include "llvm/BinaryFormat/Dwarf.def"
   DW_OP_lo_user = 0xe0,
   DW_OP_hi_user = 0xff,
-  DW_OP_LLVM_fragment = 0x1000,          ///< Only used in LLVM metadata.
-  DW_OP_LLVM_convert = 0x1001,           ///< Only used in LLVM metadata.
-  DW_OP_LLVM_tag_offset = 0x1002,        ///< Only used in LLVM metadata.
-  DW_OP_LLVM_entry_value = 0x1003,       ///< Only used in LLVM metadata.
-  DW_OP_LLVM_implicit_pointer = 0x1004,  ///< Only used in LLVM metadata.
-  DW_OP_LLVM_arg = 0x1005,               ///< Only used in LLVM metadata.
-  DW_OP_LLVM_extract_bits_sext = 0x1006, ///< Only used in LLVM metadata.
-  DW_OP_LLVM_extract_bits_zext = 0x1007, ///< Only used in LLVM metadata.
 };
 
 enum LlvmUserLocationAtom {
@@ -224,6 +218,51 @@ enum SourceLanguageName : uint16_t {
 #define HANDLE_DW_LNAME(ID, NAME, DESC, LOWER_BOUND) DW_LNAME_##NAME = ID,
 #include "llvm/BinaryFormat/Dwarf.def"
 };
+
+static constexpr size_t OpDescriptorsSize = 0x1ff + 1;
+static constexpr uint64_t OpDescriptorsHasEntryMask = 0x10ff;
+
+class OpDescriptor {
+  using IntT = int8_t;
+  static constexpr IntT VALID = -1;
+  static constexpr IntT INVALID = 0;
+  IntT IsValid : 1;
+  IntT NumOperands : 3;
+  IntT Arity : 3;
+
+public:
+  constexpr OpDescriptor() : IsValid(INVALID), NumOperands(0), Arity(0) {}
+  constexpr OpDescriptor(unsigned NumOperands, unsigned Arity)
+      : IsValid(VALID), NumOperands(NumOperands), Arity(Arity) {}
+  constexpr bool isValid() const { return IsValid == VALID; }
+  constexpr std::optional<unsigned> getNumOperands() const {
+    if (isValid() && NumOperands > 0)
+      return static_cast<unsigned>(NumOperands);
+    return std::nullopt;
+  }
+  constexpr std::optional<unsigned> getArity() const {
+    if (isValid() && Arity > 0)
+      return static_cast<unsigned>(Arity);
+    return std::nullopt;
+  }
+};
+
+extern const std::array<OpDescriptor, OpDescriptorsSize> OpDescriptors;
+
+static constexpr bool hasOpDescriptorIndex(uint64_t Op) {
+  return Op & OpDescriptorsHasEntryMask;
+}
+
+static constexpr size_t getOpDescriptorIndex(uint64_t Op) {
+  uint64_t HighBit = (Op & 0x1000) >> 4;
+  return HighBit | (Op & 0xff);
+}
+
+inline OpDescriptor getOpDescriptor(uint64_t Op) {
+  if (hasOpDescriptorIndex(Op))
+    return OpDescriptors[getOpDescriptorIndex(Op)];
+  return OpDescriptor();
+}
 
 /// Convert a DWARF 6 pair of language name and version to a DWARF 5 DW_LANG.
 /// If the version number doesn't exactly match a known version it is

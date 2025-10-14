@@ -18,6 +18,22 @@
 using namespace llvm;
 using namespace dwarf;
 
+using OpDescriptorsT = decltype(OpDescriptors);
+
+static constexpr OpDescriptorsT makeOpDescriptors() {
+  remove_cvref_t<OpDescriptorsT> Ret = {};
+#define HANDLE_DW_OP(ID, NAME, OPERANDS, ARITY, VERSION, VENDOR)               \
+  static_assert(ID >= 0x0 && ID <= 0xff);                                      \
+  Ret[getOpDescriptorIndex(DW_OP_##NAME)] = OpDescriptor(OPERANDS, ARITY);
+#define HANDLE_DW_OP_LLVM_INTERNAL(ID, NAME, OPERANDS, ARITY)                  \
+  static_assert(ID >= 0x1000 && ID <= 0x10ff);                                 \
+  Ret[getOpDescriptorIndex(DW_OP_LLVM_##NAME)] = OpDescriptor(OPERANDS, ARITY);
+#include "llvm/BinaryFormat/Dwarf.def"
+  return Ret;
+}
+
+OpDescriptorsT llvm::dwarf::OpDescriptors = makeOpDescriptors();
+
 StringRef llvm::dwarf::TagString(unsigned Tag) {
   switch (Tag) {
   default:
