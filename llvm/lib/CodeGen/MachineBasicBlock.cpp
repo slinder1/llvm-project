@@ -1840,3 +1840,38 @@ void MachineBasicBlock::removePHIsIncomingValuesForPredecessor(
 const MBBSectionID MBBSectionID::ColdSectionID(MBBSectionID::SectionType::Cold);
 const MBBSectionID
     MBBSectionID::ExceptionSectionID(MBBSectionID::SectionType::Exception);
+
+SaveBlockLiveIns::SaveBlockLiveIns(MachineBasicBlock &SaveBlock,
+                                   const TargetRegisterInfo &TRI)
+    : SaveBlock(SaveBlock), TRI(TRI),
+      MRI(SaveBlock.getParent()->getRegInfo()) {}
+
+const SparseBitVector<> &SaveBlockLiveIns::getLiveInPhysRegs() const {
+  if (!LiveInPhysRegs) {
+    LiveInPhysRegs.emplace();
+    for (const auto &LI : SaveBlock.liveins()) {
+      for (MCRegUnitMaskIterator MI(LI.PhysReg, &TRI); MI.isValid(); ++MI) {
+        auto [Unit, UnitLaneMask] = *MI;
+        if ((LI.LaneMask & UnitLaneMask).none())
+          continue;
+        for (MCRegUnitRootIterator RI(Unit, &TRI); RI.isValid(); ++RI)
+          for (auto SuperReg : TRI.superregs_inclusive(*RI))
+            LiveInPhysRegs->set(SuperReg);
+      }
+    }
+  }
+  return *LiveInPhysRegs;
+}
+
+bool SaveBlockLiveIns::aliasesLiveIn(MCPhysReg CSR) const {
+  return getLiveInPhysRegs().test(CSR);
+}
+
+bool SaveBlockLiveIns::updateLiveInCheckCanKill(MCPhysReg CSR) {
+  if (!MRI.tracksLiveness())
+    return false;
+  bool CanKill = !aliasesLiveIn(CSR);
+  if (!MRI.isLiveIn(CSR))
+    SaveBlock.addLiveIn(CSR);
+  return CanKill;
+}

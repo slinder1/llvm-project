@@ -1469,6 +1469,34 @@ public:
   MachineBasicBlock::iterator getInitial() { return I; }
 };
 
+/// Helper to efficiently test if spilled physical CSRs alias any @c LiveIn of
+/// @p SaveBlock during @c PrologEpilogInserter.
+///
+/// This respects the @c LaneBitmask of each @c LiveIn, but assumes
+/// the @c LaneBitmask of the CSR itself to be LaneBitmask::all() as this is
+/// what PrologEpilogInserter assumes.
+///
+/// This helps targets which need to account for @llvm-returnaddress or other
+/// uses of CSRs dominated by the spill when updating liveness for the spill
+/// operands, but which do not guarantee the LiveIn set of each SaveBlock
+/// includes all aliased CSRs. For example an X86 SaveBlock may have AL LiveIn,
+/// but may save+restore RAX.
+class SaveBlockLiveIns {
+  MachineBasicBlock &SaveBlock;
+  const TargetRegisterInfo &TRI;
+  const MachineRegisterInfo &MRI;
+
+  mutable std::optional<SparseBitVector<>> LiveInPhysRegs;
+  const SparseBitVector<> &getLiveInPhysRegs() const;
+
+  bool aliasesLiveIn(MCPhysReg CSR) const;
+
+public:
+  explicit SaveBlockLiveIns(MachineBasicBlock &SaveBlock,
+                            const TargetRegisterInfo &TRI);
+  bool updateLiveInCheckCanKill(MCPhysReg CSR);
+};
+
 /// Increment \p It until it points to a non-debug instruction or to \p End
 /// and return the resulting iterator. This function should only be used
 /// MachineBasicBlock::{iterator, const_iterator, instr_iterator,

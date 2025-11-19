@@ -3029,26 +3029,9 @@ bool X86FrameLowering::spillCalleeSavedRegisters(
         .setMIFlag(MachineInstr::FrameSetup);
   }
 
-  // Update LiveIn of the basic block and decide whether we can add a kill flag
-  // to the use.
-  auto UpdateLiveInCheckCanKill = [&](Register Reg) {
-    const MachineRegisterInfo &MRI = MF.getRegInfo();
-    // Do not set a kill flag on values that are also marked as live-in. This
-    // happens with the @llvm-returnaddress intrinsic and with arguments
-    // passed in callee saved registers.
-    // Omitting the kill flags is conservatively correct even if the live-in
-    // is not used after all.
-    if (MRI.isLiveIn(Reg))
-      return false;
-    MBB.addLiveIn(Reg);
-    // Check if any subregister is live-in
-    for (MCRegAliasIterator AReg(Reg, TRI, false); AReg.isValid(); ++AReg)
-      if (MRI.isLiveIn(*AReg))
-        return false;
-    return true;
-  };
+  SaveBlockLiveIns LiveIns(MBB, *TRI);
   auto UpdateLiveInGetKillRegState = [&](Register Reg) {
-    return getKillRegState(UpdateLiveInCheckCanKill(Reg));
+    return getKillRegState(LiveIns.updateLiveInCheckCanKill(Reg));
   };
 
   for (auto RI = CSI.rbegin(), RE = CSI.rend(); RI != RE; ++RI) {

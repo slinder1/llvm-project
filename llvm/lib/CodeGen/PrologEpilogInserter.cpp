@@ -609,7 +609,6 @@ static void updateLiveness(MachineFunction &MF) {
     for (MachineBasicBlock *MBB : Visited) {
       MCRegister Reg = I.getReg();
       // Add the callee-saved register as live-in.
-      // It's killed at the spill.
       if (!MRI.isReserved(Reg) && !MBB->isLiveIn(Reg))
         MBB->addLiveIn(Reg);
     }
