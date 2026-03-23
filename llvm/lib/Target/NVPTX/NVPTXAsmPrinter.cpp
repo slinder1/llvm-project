@@ -215,27 +215,26 @@ unsigned NVPTXAsmPrinter::encodeVirtualRegister(unsigned Reg) {
 
     // Encode the register class in the upper 4 bits
     // Must be kept in sync with NVPTXInstPrinter::printRegName
-    unsigned Ret = 0;
+    unsigned Ret = (1 << 28);
     if (RC == &NVPTX::B1RegClass) {
-      Ret = (1 << 28);
+      Ret |= (1 << 25);
     } else if (RC == &NVPTX::B16RegClass) {
-      Ret = (2 << 28);
+      Ret |= (2 << 25);
     } else if (RC == &NVPTX::B32RegClass) {
-      Ret = (3 << 28);
+      Ret |= (3 << 25);
     } else if (RC == &NVPTX::B64RegClass) {
-      Ret = (4 << 28);
+      Ret |= (4 << 25);
     } else if (RC == &NVPTX::B128RegClass) {
-      Ret = (7 << 28);
+      Ret |= (7 << 25);
     } else {
       report_fatal_error("Bad register class");
     }
 
     // Insert the vreg number
-    Ret |= (RegNum & 0x0FFFFFFF);
+    Ret |= (RegNum & 0x01FFFFFF);
     return Ret;
   } else {
     // Some special-use registers are actually physical registers.
-    // Encode this as the register class ID of 0 and the real register ID.
     return Reg & 0x0FFFFFFF;
   }
 }

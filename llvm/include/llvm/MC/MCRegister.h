@@ -45,6 +45,7 @@ class MCRegister {
 
 public:
   constexpr MCRegister(unsigned Val = 0) : Reg(Val) {
+    assert(Val == (unsigned)-1 || Val == (unsigned)-2 || Val < (1 << 30));
     // N.B. this does not assert `Val == NoRegister || `isPhysicalRegister(Val)`
     // to avoid paying the compilation/runtime cost for developers of the
     // compiler and to allow target specific virtual registers.
@@ -62,7 +63,8 @@ public:
   //
   //   0           Not a register, can be used as a sentinel.
   //   [1;2^28)    Physical registers assigned by TableGen.
-  //   [2^28;2^32) Target specific virtual registers after codegen.
+  //   [2^28;2^30) Target specific virtual registers after codegen.
+  //   [2^30;2^32) Unused.
   //
   // Further sentinels can be allocated from the small negative integers.
   // DenseMapInfo<unsigned> uses -1u and -2u.

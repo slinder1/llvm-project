@@ -326,7 +326,7 @@ void WebAssemblyInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (Op.isReg()) {
     const MCInstrDesc &Desc = MII.get(MI->getOpcode());
     MCRegister WAReg = Op.getReg();
-    if (int(WAReg.id()) >= 0)
+    if (!(int(WAReg.id()) & (1 << 29)))
       printRegName(O, WAReg);
     else if (OpNo >= Desc.getNumDefs() && !IsVariadicDef)
       O << "$pop" << WebAssembly::getWARegStackId(WAReg);

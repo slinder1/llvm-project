@@ -92,8 +92,8 @@ bool WebAssemblyRegNumbering::runOnMachineFunction(MachineFunction &MF) {
     // Handle stackified registers.
     if (MFI.isVRegStackified(VReg)) {
       LLVM_DEBUG(dbgs() << "VReg " << printReg(VReg) << " -> WAReg "
-                        << (INT32_MIN | NumStackRegs) << "\n");
-      MFI.setWAReg(VReg, INT32_MIN | NumStackRegs++);
+                        << ((1 << 29) | NumStackRegs) << "\n");
+      MFI.setWAReg(VReg, (1 << 29) | NumStackRegs++);
       continue;
     }
     if (MFI.getWAReg(VReg) == WebAssembly::UnusedReg) {
