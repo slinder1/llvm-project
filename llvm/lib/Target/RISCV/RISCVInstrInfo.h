@@ -86,11 +86,6 @@ public:
 
   const RISCVRegisterInfo &getRegisterInfo() const { return RegInfo; }
 
-  const TargetRegisterClass *getInlineAsmMemoryOperandRegClass(
-      InlineAsm::ConstraintCode C) const override {
-    return &RISCV::GPRRegClass;
-  }
-
   MCInst getNop() const override;
 
   Register isLoadFromStackSlot(const MachineInstr &MI,

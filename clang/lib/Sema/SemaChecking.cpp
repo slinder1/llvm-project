@@ -6603,8 +6603,9 @@ ExprResult Sema::BuiltinShuffleVector(CallExpr *TheCall) {
 
       if (RHSVecType->getNumElements() != NumElements)
         return ExprError(Diag(TheCall->getBeginLoc(),
-                              diag::err_typecheck_vector_lengths_not_equal)
-                         << LHSType << RHSType << /*isMoreThanTwoArgs*/ false
+                              diag::err_vec_builtin_incompatible_vector)
+                         << TheCall->getDirectCallee()
+                         << /*isMoreThanTwoArgs*/ false
                          << SourceRange(TheCall->getArg(1)->getBeginLoc(),
                                         TheCall->getArg(1)->getEndLoc()));
     } else if (!Context.hasSameUnqualifiedType(LHSType, RHSType)) {
@@ -12238,7 +12239,7 @@ static std::optional<IntRange> TryGetExprRange(ASTContext &C, const Expr *E,
       return IntRange::forValueOfType(C, GetExprType(E));
 
     case UO_Minus: {
-      if (GetExprType(E)->hasUnsignedIntegerRepresentation()) {
+      if (E->getType()->isUnsignedIntegerType()) {
         return TryGetExprRange(C, UO->getSubExpr(), MaxWidth, InConstantContext,
                                Approximate);
       }
@@ -12256,7 +12257,7 @@ static std::optional<IntRange> TryGetExprRange(ASTContext &C, const Expr *E,
     }
 
     case UO_Not: {
-      if (GetExprType(E)->hasUnsignedIntegerRepresentation()) {
+      if (E->getType()->isUnsignedIntegerType()) {
         return TryGetExprRange(C, UO->getSubExpr(), MaxWidth, InConstantContext,
                                Approximate);
       }

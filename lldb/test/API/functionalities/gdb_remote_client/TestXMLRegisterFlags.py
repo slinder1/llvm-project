@@ -13,9 +13,23 @@ from lldbsuite.test.gdbclientutils import *
 from lldbsuite.test.lldbgdbclient import GDBRemoteTestBase
 
 
-class TestXMLRegisterTypeFlags(GDBRemoteTestBase):
-    def setup_multidoc_test(self, docs):
-        register_data = "".join(
+class MultiDocResponder(MockGDBServerResponder):
+    # docs is a dictionary of filename -> file content.
+    def __init__(self, docs):
+        super().__init__()
+        self.docs = docs
+
+    def qXferRead(self, obj, annex, offset, length):
+        try:
+            return self.docs[annex], False
+        except KeyError:
+            return (None,)
+
+    def readRegister(self, regnum):
+        return "E01"
+
+    def readRegisters(self):
+        return "".join(
             [
                 # Data for all registers requested by the tests below.
                 # 0x7 and 0xE are used because their lsb and msb are opposites, which
@@ -25,7 +39,11 @@ class TestXMLRegisterTypeFlags(GDBRemoteTestBase):
                 "0000000000000000",  # 64 bit pc/pswa
             ]
         )
-        self.server.responder = MockGDBServerXMLResponder(docs, register_data)
+
+
+class TestXMLRegisterTypeFlags(GDBRemoteTestBase):
+    def setup_multidoc_test(self, docs):
+        self.server.responder = MultiDocResponder(docs)
         target = self.dbg.CreateTarget("")
 
         if self.TraceOn():

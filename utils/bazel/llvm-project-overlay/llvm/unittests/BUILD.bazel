@@ -928,7 +928,6 @@ cc_test(
     ) + [
         "tools/llvm-exegesis/Common/AssemblerUtils.h",
     ],
-    features = ["-layering_check"],
     includes = ["tools/llvm-exegesis"],
     deps = [
         "//llvm:AllTargetsCodeGens",

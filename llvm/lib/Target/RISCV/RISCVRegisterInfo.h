@@ -140,6 +140,11 @@ struct RISCVRegisterInfo : public RISCVGenRegisterInfo {
   }
 
   const TargetRegisterClass *
+  getPointerRegClass(unsigned Kind = 0) const override {
+    return &RISCV::GPRRegClass;
+  }
+
+  const TargetRegisterClass *
   getLargestLegalSuperClass(const TargetRegisterClass *RC,
                             const MachineFunction &) const override;
 

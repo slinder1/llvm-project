@@ -29,7 +29,6 @@
 #include "src/__support/libc_errno.h" // For error macros
 #include "src/__support/macros/config.h"
 #include "src/__support/threads/linux/futex_utils.h" // For FutexWordType
-#include "src/__support/threads/linux/futex_word.h"
 #include "src/__support/threads/thread_attributes.h"
 
 #ifdef LIBC_TARGET_ARCH_IS_AARCH64
@@ -49,6 +48,7 @@
 namespace LIBC_NAMESPACE_DECL {
 
 static constexpr size_t NAME_SIZE_MAX = 16; // Includes the null terminator
+static constexpr uint32_t CLEAR_TID_VALUE = 0xABCD1234;
 static constexpr unsigned CLONE_SYSCALL_FLAGS =
     CLONE_VM        // Share the memory space with the parent.
     | CLONE_FS      // Share the file system with the parent.
@@ -186,11 +186,15 @@ cleanup_thread_resources(ThreadAttributes *attrib) {
   auto *attrib = start_args->thread_attrib;
 
   if (attrib->style == ThreadStyle::POSIX) {
-    ThreadReturnValue retval = start_args->runner.posix_runner(start_args->arg);
-    thread_exit(retval, ThreadStyle::POSIX);
+    attrib->retval.posix_retval =
+        start_args->runner.posix_runner(start_args->arg);
+    thread_exit(ThreadReturnValue(attrib->retval.posix_retval),
+                ThreadStyle::POSIX);
   } else {
-    ThreadReturnValue retval = start_args->runner.stdc_runner(start_args->arg);
-    thread_exit(retval, ThreadStyle::STDC);
+    attrib->retval.stdc_retval =
+        start_args->runner.stdc_runner(start_args->arg);
+    thread_exit(ThreadReturnValue(attrib->retval.stdc_retval),
+                ThreadStyle::STDC);
   }
 }
 
@@ -293,7 +297,7 @@ int Thread::run(ThreadStyle style, ThreadRunner runner, void *arg, void *stack,
 
   auto clear_tid = reinterpret_cast<Futex *>(
       adjusted_stack + sizeof(StartArgs) + sizeof(ThreadAttributes));
-  clear_tid->set(1);
+  clear_tid->set(CLEAR_TID_VALUE);
   attrib->platform_data = clear_tid;
 
   get_tcb(tls.tp)->attrib = attrib;
@@ -403,9 +407,8 @@ void Thread::wait() {
   auto *clear_tid = reinterpret_cast<Futex *>(attrib->platform_data);
   // We cannot do a FUTEX_WAIT_PRIVATE here as the kernel does a
   // FUTEX_WAKE and not a FUTEX_WAKE_PRIVATE.
-  FutexWordType clear_tid_value;
-  while ((clear_tid_value = clear_tid->load()) != 0)
-    clear_tid->wait(clear_tid_value, cpp::nullopt, true);
+  while (clear_tid->load() != 0)
+    clear_tid->wait(CLEAR_TID_VALUE, cpp::nullopt, true);
 }
 
 bool Thread::operator==(const Thread &thread) const {
@@ -558,7 +561,6 @@ ErrorOr<void> Thread::kill(int sig) {
 
 void thread_exit(ThreadReturnValue retval, ThreadStyle style) {
   auto attrib = current_thread().attrib;
-  attrib->retval = retval;
 
   // The very first thing we do is to call the thread's atexit callbacks.
   // These callbacks could be the ones registered by the language runtimes,

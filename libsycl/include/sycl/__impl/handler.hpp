@@ -33,7 +33,7 @@
 _LIBSYCL_BEGIN_NAMESPACE_SYCL
 
 namespace detail {
-struct HandlerImpl;
+class HandlerImpl;
 class QueueImpl;
 } // namespace detail
 

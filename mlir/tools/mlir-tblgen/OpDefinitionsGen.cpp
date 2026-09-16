@@ -3145,7 +3145,10 @@ void OpEmitter::buildParamList(SmallVectorImpl<MethodParameter> &paramList,
   // Check if parameters besides default valued one are enough to distinguish
   // between builders with wrapped and unwrapped arguments.
   bool hasBuilderAmbiguity = true;
-  for (auto *namedAttr : llvm::make_isa_range<NamedAttribute *>(op.getArgs())) {
+  for (const auto &arg : op.getArgs()) {
+    auto *namedAttr = dyn_cast<NamedAttribute *>(arg);
+    if (!namedAttr)
+      continue;
     Attribute attr = namedAttr->attr;
     if (attr.hasDefaultValue() || attr.isDerivedAttr())
       continue;

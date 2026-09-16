@@ -1,4 +1,4 @@
-; RUN: llc < %s -asm-verbose=false -verify-machineinstrs -disable-block-placement -wasm-disable-explicit-locals -wasm-keep-registers -exception-model=emscripten | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -verify-machineinstrs -disable-block-placement -wasm-disable-explicit-locals -wasm-keep-registers -enable-emscripten-cxx-exceptions | FileCheck %s
 
 target triple = "wasm32-unknown-unknown"
 

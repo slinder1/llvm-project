@@ -52,11 +52,6 @@ public:
 
   const HexagonRegisterInfo &getRegisterInfo() const { return RegInfo; }
 
-  const TargetRegisterClass *getInlineAsmMemoryOperandRegClass(
-      InlineAsm::ConstraintCode C) const override {
-    return &Hexagon::IntRegsRegClass;
-  }
-
   bool isMIBefore(const MachineInstr *A, const MachineInstr *B) const;
   bool hasQFPInstrs(const MachineFunction &MF) const;
 

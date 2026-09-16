@@ -549,10 +549,12 @@ void GpuToLLVMConversionPass::runOnOperation() {
 
   // Populate all patterns from all dialects that implement the
   // `ConvertToLLVMPatternInterface` interface.
-  std::vector<Dialect *> dialects = context->getLoadedDialects();
-  for (auto *iface :
-       llvm::make_isa_range<ConvertToLLVMPatternInterface>(dialects))
+  for (Dialect *dialect : context->getLoadedDialects()) {
+    auto *iface = dyn_cast<ConvertToLLVMPatternInterface>(dialect);
+    if (!iface)
+      continue;
     iface->populateConvertToLLVMConversionPatterns(target, converter, patterns);
+  }
 
   // Preserve GPU modules and binaries. Modules are preserved as they can be
   // converted later by `gpu-module-to-binary`.

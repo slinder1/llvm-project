@@ -3520,10 +3520,7 @@ OpFoldResult AffineLoadOp::fold(FoldAdaptor adaptor) {
   auto indices =
       llvm::map_to_vector<4>(getAffineMap().getConstantResults(),
                              [](int64_t v) -> uint64_t { return v; });
-  ElementsAttr elementsAttr = cstAttr;
-  if (!elementsAttr.isValidIndex(indices))
-    return {};
-  return elementsAttr.getValues<Attribute>()[indices];
+  return cstAttr.getValues<Attribute>()[indices];
 }
 
 //===----------------------------------------------------------------------===//

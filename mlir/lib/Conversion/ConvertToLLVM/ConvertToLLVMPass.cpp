@@ -81,10 +81,12 @@ public:
   void apply(MLIRContext *context,
              MutableArrayRef<Dialect *> dialects) const final {
     LDBG() << "Convert to LLVM extension load";
-    for (auto *iface :
-         llvm::make_isa_range<ConvertToLLVMPatternInterface>(dialects)) {
+    for (Dialect *dialect : dialects) {
+      auto *iface = dyn_cast<ConvertToLLVMPatternInterface>(dialect);
+      if (!iface)
+        continue;
       LDBG() << "Convert to LLVM found dialect interface for "
-             << iface->getDialect()->getNamespace();
+             << dialect->getNamespace();
       iface->loadDependentDialects(context);
     }
   }
@@ -271,12 +273,14 @@ LogicalResult ConvertToLLVMPassInterface::visitInterfaces(
   } else {
     // Normal mode: Populate all patterns from all dialects that implement the
     // interface.
-    // First time we encounter this dialect: if it implements the interface,
-    // let's populate patterns !
-    std::vector<Dialect *> dialects = context->getLoadedDialects();
-    for (auto *iface :
-         llvm::make_isa_range<ConvertToLLVMPatternInterface>(dialects))
+    for (Dialect *dialect : context->getLoadedDialects()) {
+      // First time we encounter this dialect: if it implements the interface,
+      // let's populate patterns !
+      auto *iface = dyn_cast<ConvertToLLVMPatternInterface>(dialect);
+      if (!iface)
+        continue;
       visitor(iface);
+    }
   }
   return success();
 }

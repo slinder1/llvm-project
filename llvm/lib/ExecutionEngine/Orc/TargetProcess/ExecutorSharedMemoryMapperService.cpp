@@ -8,13 +8,10 @@
 
 #include "llvm/ExecutionEngine/Orc/TargetProcess/ExecutorSharedMemoryMapperService.h"
 #include "llvm/Config/llvm-config.h" // for LLVM_ON_UNIX
-#include "llvm/ExecutionEngine/Orc/Shared/Mangler.h"
 #include "llvm/ExecutionEngine/Orc/Shared/OrcRTBridge.h"
 #include "llvm/ExecutionEngine/Orc/Shared/SPSCI/SharedMemoryMapperSPSCI.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/WindowsError.h"
-#include "llvm/TargetParser/Host.h"
-#include "llvm/TargetParser/Triple.h"
 #include <sstream>
 
 #if defined(LLVM_ON_UNIX)
@@ -313,16 +310,14 @@ Error ExecutorSharedMemoryMapperService::shutdown() {
 
 void ExecutorSharedMemoryMapperService::addBootstrapSymbols(
     StringMap<ExecutorAddr> &M) {
-  Mangler Mangle{Triple(sys::getProcessTriple())};
-  M[Mangle.mangledCopy(rt::sps_ci::SharedMemoryMapperInstanceName)] =
-      ExecutorAddr::fromPtr(this);
-  M[Mangle.mangledCopy(rt::sps_ci::SharedMemoryMapperReserve::Name)] =
+  M[rt::sps_ci::SharedMemoryMapperInstanceName] = ExecutorAddr::fromPtr(this);
+  M[rt::sps_ci::SharedMemoryMapperReserve::Name] =
       ExecutorAddr::fromPtr(&reserveWrapper);
-  M[Mangle.mangledCopy(rt::sps_ci::SharedMemoryMapperInitialize::Name)] =
+  M[rt::sps_ci::SharedMemoryMapperInitialize::Name] =
       ExecutorAddr::fromPtr(&initializeWrapper);
-  M[Mangle.mangledCopy(rt::sps_ci::SharedMemoryMapperDeinitialize::Name)] =
+  M[rt::sps_ci::SharedMemoryMapperDeinitialize::Name] =
       ExecutorAddr::fromPtr(&deinitializeWrapper);
-  M[Mangle.mangledCopy(rt::sps_ci::SharedMemoryMapperRelease::Name)] =
+  M[rt::sps_ci::SharedMemoryMapperRelease::Name] =
       ExecutorAddr::fromPtr(&releaseWrapper);
 }
 

@@ -49,6 +49,13 @@ ThumbRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
   return ARMBaseRegisterInfo::getLargestLegalSuperClass(RC, MF);
 }
 
+const TargetRegisterClass *
+ThumbRegisterInfo::getPointerRegClass(unsigned Kind) const {
+  if (!IsThumb1Only)
+    return ARMBaseRegisterInfo::getPointerRegClass(Kind);
+  return &ARM::tGPRRegClass;
+}
+
 static void emitThumb1LoadConstPool(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator &MBBI,
                                     const DebugLoc &dl, unsigned DestReg,

@@ -333,8 +333,7 @@ function(add_lldb_library name)
     set_target_properties(${name} PROPERTIES FRAMEWORK ON)
   endif()
 
-  if(PARAM_SHARED OR
-     (LLDB_BUILD_STATIC_LIBLLDB AND libkind STREQUAL "STATIC"))
+  if(PARAM_SHARED)
     set(install_dest lib${LLVM_LIBDIR_SUFFIX})
     if(PARAM_INSTALL_PREFIX)
       set(install_dest ${PARAM_INSTALL_PREFIX})

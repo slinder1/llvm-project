@@ -1037,7 +1037,7 @@ MachineInstr::getRegClassConstraint(unsigned OpIdx,
 
   // Assume that all registers in a memory operand are pointers.
   if (F.isMemKind())
-    return TII->getInlineAsmMemoryOperandRegClass(F.getMemoryConstraintID());
+    return TRI->getPointerRegClass();
 
   return nullptr;
 }

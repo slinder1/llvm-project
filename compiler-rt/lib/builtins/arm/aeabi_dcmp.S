@@ -33,10 +33,10 @@
 #elif defined(__ARM_FEATURE_BTI_DEFAULT)
 #  define PROLOGUE PACBTI_LANDING        SEPARATOR \
                    push      { r4, lr }
-#  define EPILOGUE POP_PC_WITH_REGS r4
+#  define EPILOGUE pop       { r4, pc }
 #else
 #  define PROLOGUE push      { r4, lr }
-#  define EPILOGUE POP_PC_WITH_REGS r4
+#  define EPILOGUE pop       { r4, pc }
 #endif
 
 #define DEFINE_AEABI_DCMP(cond)                            \

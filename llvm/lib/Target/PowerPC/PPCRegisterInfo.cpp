@@ -160,6 +160,23 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCTargetMachine &TM)
   ImmToIdxMap[PPC::PSTXVP] = PPC::STXVPX;
 }
 
+/// getPointerRegClass - Return the register class to use to hold pointers.
+/// This is used for addressing modes.
+const TargetRegisterClass *
+PPCRegisterInfo::getPointerRegClass(unsigned Kind) const {
+  // Note that PPCInstrInfo::foldImmediate also directly uses this Kind value
+  // when it checks for ZERO folding.
+  if (Kind == 1) {
+    if (TM.isPPC64())
+      return &PPC::G8RC_NOX0RegClass;
+    return &PPC::GPRC_NOR0RegClass;
+  }
+
+  if (TM.isPPC64())
+    return &PPC::G8RCRegClass;
+  return &PPC::GPRCRegClass;
+}
+
 const MCPhysReg*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   const PPCSubtarget &Subtarget = MF->getSubtarget<PPCSubtarget>();
@@ -2004,7 +2021,9 @@ Register PPCRegisterInfo::materializeFrameBaseRegister(MachineBasicBlock *MBB,
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   const MCInstrDesc &MCID = TII.get(ADDriOpc);
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
-  Register BaseReg = MRI.createVirtualRegister(TII.getRegClass(MCID, 0));
+  const TargetRegisterClass *RC = getPointerRegClass();
+  Register BaseReg = MRI.createVirtualRegister(RC);
+  MRI.constrainRegClass(BaseReg, TII.getRegClass(MCID, 0));
 
   BuildMI(*MBB, Ins, DL, MCID, BaseReg)
     .addFrameIndex(FrameIdx).addImm(Offset);

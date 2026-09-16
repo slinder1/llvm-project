@@ -2889,7 +2889,10 @@ static xegpu::DistributeLayoutAttr getLoopCarriedLayoutForYieldOperand(
   if (it == mapping.end())
     return nullptr;
   xegpu::DistributeLayoutAttr iterArgLayout;
-  for (auto arg : llvm::make_isa_range<BlockArgument>(it->second)) {
+  for (Value input : it->second) {
+    auto arg = dyn_cast<BlockArgument>(input);
+    if (!arg)
+      continue;
     xegpu::DistributeLayoutAttr layout = xegpu::getDistributeLayoutAttr(arg);
     assert((!iterArgLayout || !layout || iterArgLayout.isEqualTo(layout)) &&
            "region inputs fed by one terminator operand disagree on layout");

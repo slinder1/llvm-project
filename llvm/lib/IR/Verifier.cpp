@@ -530,14 +530,14 @@ private:
   } while (false)
 
 void Verifier::visitDbgRecords(Instruction &I) {
-  if (!I.getDbgMarker())
+  if (!I.DebugMarker)
     return;
-  CheckDI(I.getDbgMarker()->MarkedInstr == &I,
+  CheckDI(I.DebugMarker->MarkedInstr == &I,
           "Instruction has invalid DebugMarker", &I);
   CheckDI(!isa<PHINode>(&I) || !I.hasDbgRecords(),
           "PHI Node must not have any attached DbgRecords", &I);
   for (DbgRecord &DR : I.getDbgRecordRange()) {
-    CheckDI(DR.getMarker() == I.getDbgMarker(),
+    CheckDI(DR.getMarker() == I.DebugMarker,
             "DbgRecord had invalid DebugMarker", &I, &DR);
     if (auto *Loc =
             dyn_cast_or_null<DILocation>(DR.getDebugLoc().getAsMDNode()))

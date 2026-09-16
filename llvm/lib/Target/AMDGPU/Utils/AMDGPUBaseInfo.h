@@ -123,18 +123,6 @@ struct CvtScaleF32_F32F16ToF8F4_Info {
   unsigned Opcode;
 };
 
-/// Normalized WMMA or SWMMAC family used to select co-execution rules.
-enum class WMMAVariant {
-  Unknown = 0,
-  IU8_16x16x64,
-  F8F6F4_16x16x128,
-  F8F6F4_16x16x128_BothF4,
-  FP8BF8_16x16x64,
-  F16BF16_16x16x32,
-  FP8BF8_16x16x128,
-  F4_32x16x128,
-};
-
 struct True16D16Info {
   unsigned T16Op;
   unsigned HiOp;
@@ -145,7 +133,6 @@ struct WMMAInstInfo {
   uint32_t Opcode;
   bool is_wmma_xdl;
   bool HasMatrixScale;
-  WMMAVariant CoExecVariant;
 };
 
 #define GET_MIMGBaseOpcode_DECL
@@ -460,8 +447,7 @@ const MIMGG16MappingInfo *getMIMGG16MappingInfo(unsigned G);
 
 LLVM_READONLY
 int getMIMGOpcode(unsigned BaseOpcode, unsigned MIMGEncoding,
-                  unsigned VDataDwords, unsigned VAddrDwords,
-                  bool IndexedRsrc = false, bool IndexedSamp = false);
+                  unsigned VDataDwords, unsigned VAddrDwords);
 
 LLVM_READONLY
 int getMaskedMIMGOp(unsigned Opc, unsigned NewChannels);
@@ -478,8 +464,6 @@ struct MIMGInfo {
   uint8_t VDataDwords;
   uint8_t VAddrDwords;
   uint8_t VAddrOperands;
-  bool IndexedRsrc;
-  bool IndexedSamp;
 };
 
 LLVM_READONLY

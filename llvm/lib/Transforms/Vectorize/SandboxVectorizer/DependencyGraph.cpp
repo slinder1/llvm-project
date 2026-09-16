@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Vectorize/SandboxVectorizer/DependencyGraph.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/SandboxIR/Instruction.h"
 #include "llvm/SandboxIR/Utils.h"
 #include "llvm/Transforms/Vectorize/SandboxVectorizer/Scheduler.h"
@@ -649,7 +650,7 @@ void DependencyGraph::notifySetUse(const Use &U, Value *NewSrc) {
   }
 }
 
-Interval<Instruction> DependencyGraph::extend(BndlRef<Instruction *> Instrs) {
+Interval<Instruction> DependencyGraph::extend(ArrayRef<Instruction *> Instrs) {
   if (Instrs.empty())
     return {};
 

@@ -143,7 +143,6 @@ struct MLIRToLLVMPassPipelineConfig : public FlangEPCallBacks {
       InstrumentFunctionEntry = "__cyg_profile_func_enter";
       InstrumentFunctionExit = "__cyg_profile_func_exit";
     }
-    DisableTailCalls = opts.DisableTailCalls;
     DwarfVersion = opts.DwarfVersion;
     SplitDwarfFile = opts.SplitDwarfFile;
     DwarfDebugFlags = opts.DwarfDebugFlags;
@@ -179,7 +178,6 @@ struct MLIRToLLVMPassPipelineConfig : public FlangEPCallBacks {
       false; ///< Compiling for an OpenMP target device.
   bool UseSampleProfile = false; ///< Enable sample based profiling
   bool DebugInfoForProfiling = false; ///< Enable extra debugging info
-  bool DisableTailCalls = false; ///< Disable tail call optimization
   bool EnableOpenMPSimd = false; ///< Enable OpenMP simd-only mode.
   bool SkipConvertComplexPow = false; ///< Do not run complex pow conversion.
   std::string InstrumentFunctionEntry =

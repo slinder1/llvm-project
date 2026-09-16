@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/Orc/MachOPlatform.h"
-#include "llvm/ExecutionEngine/Orc/Mangling.h"
 
 #include "llvm/BinaryFormat/MachO.h"
 #include "llvm/ExecutionEngine/JITLink/EHFrameSupport.h"
@@ -303,14 +302,13 @@ MachOPlatform::Create(ObjectLinkingLayer &ObjLinkingLayer, JITDylib &PlatformJD,
 
   {
     // Add JIT dispatch reexports from bootstrap JITDylib.
-    MangleAndInterner Mangle(ES);
     if (auto Err = PlatformJD.define(reexports(
             ES.getBootstrapJITDylib(),
             {{ES.intern("___orc_rt_jit_dispatch"),
-              {Mangle(rt::DispatchName),
+              {ES.intern(rt::DispatchName),
                JITSymbolFlags::Exported | JITSymbolFlags::Callable}},
              {ES.intern("___orc_rt_jit_dispatch_ctx"),
-              {Mangle(rt::DispatchCtxName), JITSymbolFlags::Exported}}})))
+              {ES.intern(rt::DispatchCtxName), JITSymbolFlags::Exported}}})))
       return Err;
   }
 

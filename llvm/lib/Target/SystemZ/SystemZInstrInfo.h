@@ -309,11 +309,6 @@ public:
   // Return the SystemZRegisterInfo, which this class owns.
   const SystemZRegisterInfo &getRegisterInfo() const { return RI; }
 
-  const TargetRegisterClass *getInlineAsmMemoryOperandRegClass(
-      InlineAsm::ConstraintCode C) const override {
-    return &SystemZ::ADDR64BitRegClass;
-  }
-
   // Return the size in bytes of MI.
   unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
 

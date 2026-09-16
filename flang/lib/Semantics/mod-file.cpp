@@ -1754,12 +1754,7 @@ Scope *ModFileReader::Read(SourceName name, std::optional<bool> isIntrinsic,
   parser::Options options;
   options.isModuleFile = true;
   options.features.Enable(common::LanguageFeature::BackslashEscapes);
-  // CUDA Fortran device code can call procedures whose device-side call target
-  // is described by an `acc routine bind(...)` directive in the module that
-  // declares them, so the sentinel must be recognized here even when this
-  // compilation itself was not given an OpenACC target.
-  if (context_.languageFeatures().IsEnabled(common::LanguageFeature::OpenACC) ||
-      context_.languageFeatures().IsEnabled(common::LanguageFeature::CUDA)) {
+  if (context_.languageFeatures().IsEnabled(common::LanguageFeature::OpenACC)) {
     options.features.Enable(common::LanguageFeature::OpenACC);
   }
   options.features.Enable(common::LanguageFeature::OpenMP);

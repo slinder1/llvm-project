@@ -2988,22 +2988,17 @@ static int GetMatchingDistance(const common::LanguageFeatureControl &features,
 
   std::optional<common::CUDADataAttr> actualDataAttr, dummyDataAttr;
   // True when an unattributed actual may use the implicit CUDA memory mode
-  // matching enabled by -gpu=mem:unified (any variable) or -gpu=mem:managed
-  // (allocatable/pointer objects only).
+  // matching enabled by -gpu=mem:unified or -gpu=mem:managed.
   bool actualCanUseImplicitCudaMemoryMode{false};
   if (actual) {
     if (auto *expr{actual->UnwrapExpr()}) {
       if (evaluate::IsVariable(*expr)) {
-        bool actualIsAllocatableOrPointer{false};
+        actualCanUseImplicitCudaMemoryMode = true;
         // Match check-call.cpp: walk the whole designator so e.g. b%a picks up
         // ATTRIBUTES(DEVICE) from the base b when the component a has no CUDA
         // attribute (OpenACC use_device(b) + doit(b%a)), not only from the
         // last symbol (GetLastSymbol would only see a).
         for (const Symbol &s : evaluate::GetSymbolVector(*expr)) {
-          if (semantics::IsAllocatableOrPointer(
-                  semantics::ResolveAssociations(s))) {
-            actualIsAllocatableOrPointer = true;
-          }
           if (const auto *object{
                   s.detailsIf<semantics::ObjectEntityDetails>()}) {
             if (auto cudaAttr{object->cudaDataAttr()}) {
@@ -3011,8 +3006,6 @@ static int GetMatchingDistance(const common::LanguageFeatureControl &features,
             }
           }
         }
-        actualCanUseImplicitCudaMemoryMode =
-            isCudaUnified || (isCudaManaged && actualIsAllocatableOrPointer);
       } else if (const auto *actualLastSymbol{evaluate::GetLastSymbol(*expr)}) {
         // Propagate any explicit CUDA data attribute from the referenced
         // symbol (e.g. a device array operand inside RESHAPE()) so that

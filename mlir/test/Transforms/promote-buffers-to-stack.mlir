@@ -1,7 +1,6 @@
 // RUN: mlir-opt -promote-buffers-to-stack -split-input-file %s | FileCheck %s --check-prefix=CHECK --check-prefix DEFINDEX
 // RUN: mlir-opt -promote-buffers-to-stack="max-alloc-size-in-bytes=64" -split-input-file %s | FileCheck %s --check-prefix=CHECK --check-prefix LOWLIMIT
 // RUN: mlir-opt -promote-buffers-to-stack="max-rank-of-allocated-memref=2" -split-input-file %s | FileCheck %s --check-prefix=CHECK --check-prefix RANK
-// RUN: mlir-opt -promote-buffers-to-stack="max-alloc-size-in-bytes=536870912" -split-input-file %s | FileCheck %s --check-prefix=CHECK --check-prefix HIGHLIMIT
 
 // This file checks the behavior of PromoteBuffersToStack pass for converting
 // AllocOps into AllocaOps, if possible.
@@ -571,9 +570,7 @@ func.func @loop_nested_if_alloc(
 // -----
 
 // Test Case: The allocated buffer is too large and, hence, it is not
-// converted. In the actual implementation the largest size is 1KB. Under a
-// high limit (e.g. 512 MiB) that overflows `maxAllocSizeInBytes * 8` as a
-// 32-bit unsigned value, it must still be converted.
+// converted. In the actual implementation the largest size is 1KB.
 
 // CHECK-LABEL: func @large_buffer_allocation
 func.func @large_buffer_allocation(%arg0: memref<2048xf32>) {
@@ -582,10 +579,7 @@ func.func @large_buffer_allocation(%arg0: memref<2048xf32>) {
   return
 }
 
-// DEFINDEX-NEXT: %[[ALLOC:.*]] = memref.alloc()
-// LOWLIMIT-NEXT: %[[ALLOC:.*]] = memref.alloc()
-// RANK-NEXT: %[[ALLOC:.*]] = memref.alloc()
-// HIGHLIMIT-NEXT: %[[ALLOC:.*]] = memref.alloca()
+// CHECK-NEXT: %[[ALLOC:.*]] = memref.alloc()
 // CHECK-NEXT: test.copy
 
 // -----
@@ -602,7 +596,6 @@ func.func @indexElementType() {
 // DEFINDEX-NEXT: memref.alloca()
 // LOWLIMIT-NEXT: memref.alloca()
 // RANK-NEXT: memref.alloca()
-// HIGHLIMIT-NEXT: memref.alloca()
 // CHECK-NEXT: return
 
 // -----
@@ -617,7 +610,6 @@ module attributes { dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<index, 256>>} {
 // DEFINDEX-NEXT: memref.alloca() alignment = 64 {custom_attr}
 // LOWLIMIT-NEXT: memref.alloc() alignment = 64 {custom_attr}
 // RANK-NEXT: memref.alloca() alignment = 64 {custom_attr}
-// HIGHLIMIT-NEXT: memref.alloca() alignment = 64 {custom_attr}
 // CHECK-NEXT: return
 
 // -----

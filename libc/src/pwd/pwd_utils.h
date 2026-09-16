@@ -16,7 +16,6 @@
 
 #include "hdr/errno_macros.h"
 #include "hdr/types/gid_t.h"
-#include "hdr/types/size_t.h"
 #include "hdr/types/struct_passwd.h"
 #include "hdr/types/uid_t.h"
 #include "src/__support/CPP/span.h"
@@ -35,63 +34,59 @@ namespace pwd {
 
 // Parses a colon-separated line in-place into a struct passwd.
 template <>
-LIBC_INLINE ErrorOr<void> parse_line<struct passwd>(cpp::span<char> line,
-                                                    cpp::span<char> /*scratch*/,
-                                                    struct passwd *pwd) {
-  if (!pwd || line.empty() || line.back() != '\0')
-    return Error(EINVAL);
+LIBC_INLINE bool parse_line<struct passwd>(cpp::span<char> line,
+                                           struct passwd *pwd) {
+  if (line.empty() || !pwd)
+    return false;
 
   FieldTokenizer tokenizer(line);
 
   auto name = tokenizer.next_field();
-  if (!name || name->empty() || name->front() == '\0')
-    return Error(EINVAL);
+  if (!name)
+    return false;
   pwd->pw_name = name->data();
 
   auto passwd = tokenizer.next_field();
   if (!passwd)
-    return Error(EINVAL);
+    return false;
   pwd->pw_passwd = passwd->data();
 
   auto uid_str = tokenizer.next_field();
   if (!uid_str || uid_str->empty() || !internal::isdigit(uid_str->front()))
-    return Error(EINVAL);
+    return false;
   auto uid_res = internal::strtointeger<uid_t>(uid_str->data(), 10);
   if (uid_res.has_error() || uid_res.parsed_len <= 0 ||
-      static_cast<size_t>(uid_res.parsed_len) + 1 != uid_str->size() ||
+      static_cast<size_t>(uid_res.parsed_len) >= uid_str->size() ||
       (*uid_str)[uid_res.parsed_len] != '\0')
-    return Error(EINVAL);
+    return false;
   pwd->pw_uid = uid_res.value;
 
   auto gid_str = tokenizer.next_field();
   if (!gid_str || gid_str->empty() || !internal::isdigit(gid_str->front()))
-    return Error(EINVAL);
+    return false;
   auto gid_res = internal::strtointeger<gid_t>(gid_str->data(), 10);
   if (gid_res.has_error() || gid_res.parsed_len <= 0 ||
-      static_cast<size_t>(gid_res.parsed_len) + 1 != gid_str->size() ||
+      static_cast<size_t>(gid_res.parsed_len) >= gid_str->size() ||
       (*gid_str)[gid_res.parsed_len] != '\0')
-    return Error(EINVAL);
+    return false;
   pwd->pw_gid = gid_res.value;
 
   auto gecos = tokenizer.next_field();
   if (!gecos)
-    return Error(EINVAL);
+    return false;
   pwd->pw_gecos = gecos->data();
 
   auto dir = tokenizer.next_field();
   if (!dir)
-    return Error(EINVAL);
+    return false;
   pwd->pw_dir = dir->data();
 
   auto shell = tokenizer.next_field();
   if (!shell)
-    return Error(EINVAL);
+    return false;
   pwd->pw_shell = shell->data();
 
-  if (tokenizer.next_field())
-    return Error(EINVAL);
-
-  return {};
+  return true;
 }
 
 // Parses a colon-separated password database line into a struct passwd.

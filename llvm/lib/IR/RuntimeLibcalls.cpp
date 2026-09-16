@@ -101,10 +101,12 @@ RuntimeLibcallsInfo::RuntimeLibcallsInfo(const Triple &TT,
 }
 
 // TODO: Consider the remaining module flags.
-RuntimeLibcallsInfo::RuntimeLibcallsInfo(const Module &M, StringRef ABIName,
+RuntimeLibcallsInfo::RuntimeLibcallsInfo(const Module &M,
+                                         ExceptionHandling ExceptionModel,
+                                         StringRef ABIName,
                                          VectorLibrary VecLib)
-    : RuntimeLibcallsInfo(M.getTargetTriple(), M.getExceptionModel(),
-                          M.getFloatABI(), ABIName, VecLib) {}
+    : RuntimeLibcallsInfo(M.getTargetTriple(), ExceptionModel, M.getFloatABI(),
+                          ABIName, VecLib) {}
 
 bool RuntimeLibcallsInfo::isLibraryAvailable(StringRef LibraryName) const {
   // TODO: Drive this from module-level state (e.g. the linked runtime). For now

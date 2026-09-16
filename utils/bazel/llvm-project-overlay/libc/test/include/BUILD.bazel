@@ -13,17 +13,15 @@ licenses(["notice"])
 libc_test(
     name = "assert_test",
     srcs = ["assert_test.cpp"],
-    deps = [
-        "//libc:llvm_libc_macros_assert_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
     name = "complex_test",
     srcs = ["complex_test.cpp"],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_complex_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -34,9 +32,9 @@ libc_test(
         "FpClassifyTest.h",
         "fpclassify_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -47,9 +45,9 @@ libc_test(
         "FpClassifyTest.h",
         "fpclassifyf_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -60,9 +58,9 @@ libc_test(
         "FpClassifyTest.h",
         "fpclassifyl_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -71,9 +69,7 @@ libc_test(
     name = "fpclassify_c_test",
     srcs = ["fpclassify_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
@@ -82,9 +78,9 @@ libc_test(
         "IsFiniteTest.h",
         "isfinite_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -95,9 +91,9 @@ libc_test(
         "IsFiniteTest.h",
         "isfinitef_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -108,9 +104,9 @@ libc_test(
         "IsFiniteTest.h",
         "isfinitel_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -119,9 +115,7 @@ libc_test(
     name = "isfinite_c_test",
     srcs = ["isfinite_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
@@ -130,9 +124,9 @@ libc_test(
         "IsInfTest.h",
         "isinf_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -143,9 +137,9 @@ libc_test(
         "IsInfTest.h",
         "isinff_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -156,9 +150,9 @@ libc_test(
         "IsInfTest.h",
         "isinfl_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -167,9 +161,7 @@ libc_test(
     name = "isinf_c_test",
     srcs = ["isinf_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
@@ -178,9 +170,9 @@ libc_test(
         "IsNanTest.h",
         "isnan_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -191,9 +183,9 @@ libc_test(
         "IsNanTest.h",
         "isnanf_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -204,9 +196,9 @@ libc_test(
         "IsNanTest.h",
         "isnanl_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -215,9 +207,7 @@ libc_test(
     name = "isnan_c_test",
     srcs = ["isnan_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
@@ -226,9 +216,9 @@ libc_test(
         "IsNormalTest.h",
         "isnormal_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -239,9 +229,9 @@ libc_test(
         "IsNormalTest.h",
         "isnormalf_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -252,9 +242,9 @@ libc_test(
         "IsNormalTest.h",
         "isnormall_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -263,18 +253,14 @@ libc_test(
     name = "isnormal_c_test",
     srcs = ["isnormal_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
     name = "issubnormal_c_test",
     srcs = ["issubnormal_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
@@ -283,9 +269,9 @@ libc_test(
         "IsZeroTest.h",
         "iszero_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -296,9 +282,9 @@ libc_test(
         "IsZeroTest.h",
         "iszerof_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -309,9 +295,9 @@ libc_test(
         "IsZeroTest.h",
         "iszerol_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -320,9 +306,7 @@ libc_test(
     name = "iszero_c_test",
     srcs = ["iszero_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
@@ -331,9 +315,9 @@ libc_test(
         "SignbitTest.h",
         "signbit_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -344,9 +328,9 @@ libc_test(
         "SignbitTest.h",
         "signbitf_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -357,9 +341,9 @@ libc_test(
         "SignbitTest.h",
         "signbitl_test.cpp",
     ],
-    full_build_only = True,
+    full_build = True,
     deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
+        "//libc:public_headers_deps",
         "//libc/test/UnitTest:fp_test_helpers",
     ],
 )
@@ -370,38 +354,31 @@ libc_test(
         "stdbit_stub.h",
         "stdbit_test.cpp",
     ],
-    full_build_only = True,
-    deps = [
-        "//libc:llvm_libc_common_h",
-        "//libc:llvm_libc_macros_stdbit_macros",
-    ],
+    full_build = True,
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
     name = "signbit_c_test",
     srcs = ["signbit_test.c"],
     c_test = True,
-    deps = [
-        "//libc:llvm_libc_macros_math_function_macros",
-    ],
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
     name = "stdckdint_test",
     srcs = ["stdckdint_test.cpp"],
-    full_build_only = True,
-    deps = [
-        "//libc:llvm_libc_macros_stdckdint_macros",
-    ],
+    full_build = True,
+    deps = ["//libc:public_headers_deps"],
 )
 
 libc_test(
     name = "sys_queue_test",
     srcs = ["sys/queue_test.cpp"],
-    full_build_only = True,
+    full_build = True,
     deps = [
         "//libc:__support_char_vector",
         "//libc:__support_cpp_string",
-        "//libc:llvm_libc_macros_sys_queue_macros",
+        "//libc:public_headers_deps",
     ],
 )

@@ -452,7 +452,8 @@ bool llvm::runPassPipeline(
 
     MAM.registerPass([&] {
       const TargetOptions &Options = TM->Options;
-      return RuntimeLibraryAnalysis(Options.MCOptions.ABIName, Options.VecLib);
+      return RuntimeLibraryAnalysis(Options.ExceptionModel,
+                                    Options.MCOptions.ABIName, Options.VecLib);
     });
   }
 

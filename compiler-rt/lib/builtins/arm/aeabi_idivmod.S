@@ -51,7 +51,7 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_idivmod)
         pop     { r12, lr }
         PAC_RETURN
 #else
-        POP_PC
+        pop     { pc }
 #endif
 #endif //  defined(USE_THUMB_1)
 END_COMPILERRT_FUNCTION(__aeabi_idivmod)

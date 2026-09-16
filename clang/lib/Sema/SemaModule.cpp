@@ -566,8 +566,7 @@ Sema::ActOnPrivateModuleFragmentDecl(SourceLocation ModuleLoc,
   TU->setLocalOwningModule(PrivateModuleFragment);
 
   // FIXME: Consider creating an explicit representation of this declaration.
-  // Returning TU as marker for it is correctly parsed.
-  return ConvertDeclToDeclGroup(TU);
+  return nullptr;
 }
 
 DeclResult Sema::ActOnModuleImport(SourceLocation StartLoc,

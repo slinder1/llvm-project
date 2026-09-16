@@ -312,11 +312,9 @@ unsigned getCompletionActionImplicitArgPosition(unsigned CodeObjectVersion) {
 #include "AMDGPUGenSearchableTables.inc"
 
 int getMIMGOpcode(unsigned BaseOpcode, unsigned MIMGEncoding,
-                  unsigned VDataDwords, unsigned VAddrDwords, bool IndexedRsrc,
-                  bool IndexedSamp) {
+                  unsigned VDataDwords, unsigned VAddrDwords) {
   const MIMGInfo *Info =
-      getMIMGOpcodeHelper(BaseOpcode, MIMGEncoding, VDataDwords, VAddrDwords,
-                          IndexedRsrc, IndexedSamp);
+      getMIMGOpcodeHelper(BaseOpcode, MIMGEncoding, VDataDwords, VAddrDwords);
   return Info ? Info->Opcode : -1;
 }
 
@@ -327,9 +325,9 @@ const MIMGBaseOpcodeInfo *getMIMGBaseOpcode(unsigned Opc) {
 
 int getMaskedMIMGOp(unsigned Opc, unsigned NewChannels) {
   const MIMGInfo *OrigInfo = getMIMGInfo(Opc);
-  const MIMGInfo *NewInfo = getMIMGOpcodeHelper(
-      OrigInfo->BaseOpcode, OrigInfo->MIMGEncoding, NewChannels,
-      OrigInfo->VAddrDwords, OrigInfo->IndexedRsrc, OrigInfo->IndexedSamp);
+  const MIMGInfo *NewInfo =
+      getMIMGOpcodeHelper(OrigInfo->BaseOpcode, OrigInfo->MIMGEncoding,
+                          NewChannels, OrigInfo->VAddrDwords);
   return NewInfo ? NewInfo->Opcode : -1;
 }
 

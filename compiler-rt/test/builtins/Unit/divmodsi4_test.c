@@ -1,7 +1,4 @@
 // RUN: %clang_builtins %s %librt -o %t && %run %t
-// RUN: %if arm-target-arch || armv4t-target-arch %{ \
-// RUN:   %clang_builtins -mthumb %s %librt -o %t.thumb && %run %t.thumb \
-// RUN: %}
 // REQUIRES: librt_has_divmodsi4
 
 #include "int_lib.h"

@@ -37,11 +37,6 @@ public:
   ///
   const ThumbRegisterInfo &getRegisterInfo() const { return RI; }
 
-  const TargetRegisterClass *getInlineAsmMemoryOperandRegClass(
-      InlineAsm::ConstraintCode C) const override {
-    return &ARM::tGPRRegClass;
-  }
-
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    const DebugLoc &DL, Register DestReg, Register SrcReg,
                    bool KillSrc, bool RenamableDest = false,
