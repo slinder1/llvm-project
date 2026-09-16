@@ -10,7 +10,6 @@
 
 #include "llvm/ExecutionEngine/Orc/AbsoluteSymbols.h"
 #include "llvm/ExecutionEngine/Orc/EPCGenericMemoryAccessSPS.h"
-#include "llvm/ExecutionEngine/Orc/Mangling.h"
 #include "llvm/ExecutionEngine/Orc/SelfExecutorProcessControl.h"
 #include "llvm/ExecutionEngine/Orc/Shared/SPSCI/MemoryAccessSPSCI.h"
 #include "llvm/Testing/Support/Error.h"
@@ -127,41 +126,40 @@ public:
     // resolves its proxies to them.
     namespace sps_ci = rt::sps_ci;
     auto Exported = JITSymbolFlags::Exported;
-    MangleAndInterner Mangle(*ES);
     cantFail(ES->getBootstrapJITDylib().define(absoluteSymbols(
-        {{Mangle(sps_ci::MemWriteUInt8s::Name),
+        {{ES->intern(sps_ci::MemWriteUInt8s::Name),
           {ExecutorAddr::fromPtr(&testWriteUInts<tpctypes::UInt8Write,
                                                  SPSMemoryAccessUInt8Write>),
            Exported}},
-         {Mangle(sps_ci::MemWriteUInt16s::Name),
+         {ES->intern(sps_ci::MemWriteUInt16s::Name),
           {ExecutorAddr::fromPtr(&testWriteUInts<tpctypes::UInt16Write,
                                                  SPSMemoryAccessUInt16Write>),
            Exported}},
-         {Mangle(sps_ci::MemWriteUInt32s::Name),
+         {ES->intern(sps_ci::MemWriteUInt32s::Name),
           {ExecutorAddr::fromPtr(&testWriteUInts<tpctypes::UInt32Write,
                                                  SPSMemoryAccessUInt32Write>),
            Exported}},
-         {Mangle(sps_ci::MemWriteUInt64s::Name),
+         {ES->intern(sps_ci::MemWriteUInt64s::Name),
           {ExecutorAddr::fromPtr(&testWriteUInts<tpctypes::UInt64Write,
                                                  SPSMemoryAccessUInt64Write>),
            Exported}},
-         {Mangle(sps_ci::MemWritePointers::Name),
+         {ES->intern(sps_ci::MemWritePointers::Name),
           {ExecutorAddr::fromPtr(&testWritePointers), Exported}},
-         {Mangle(sps_ci::MemWriteBuffers::Name),
+         {ES->intern(sps_ci::MemWriteBuffers::Name),
           {ExecutorAddr::fromPtr(&testWriteBuffers), Exported}},
-         {Mangle(sps_ci::MemReadUInt8s::Name),
+         {ES->intern(sps_ci::MemReadUInt8s::Name),
           {ExecutorAddr::fromPtr(&testReadUInts<uint8_t>), Exported}},
-         {Mangle(sps_ci::MemReadUInt16s::Name),
+         {ES->intern(sps_ci::MemReadUInt16s::Name),
           {ExecutorAddr::fromPtr(&testReadUInts<uint16_t>), Exported}},
-         {Mangle(sps_ci::MemReadUInt32s::Name),
+         {ES->intern(sps_ci::MemReadUInt32s::Name),
           {ExecutorAddr::fromPtr(&testReadUInts<uint32_t>), Exported}},
-         {Mangle(sps_ci::MemReadUInt64s::Name),
+         {ES->intern(sps_ci::MemReadUInt64s::Name),
           {ExecutorAddr::fromPtr(&testReadUInts<uint64_t>), Exported}},
-         {Mangle(sps_ci::MemReadPointers::Name),
+         {ES->intern(sps_ci::MemReadPointers::Name),
           {ExecutorAddr::fromPtr(&testReadPointers), Exported}},
-         {Mangle(sps_ci::MemReadBuffers::Name),
+         {ES->intern(sps_ci::MemReadBuffers::Name),
           {ExecutorAddr::fromPtr(&testReadBuffers), Exported}},
-         {Mangle(sps_ci::MemReadStrings::Name),
+         {ES->intern(sps_ci::MemReadStrings::Name),
           {ExecutorAddr::fromPtr(&testReadStrings), Exported}}})));
 
     MemAccess = cantFail(sps::createEPCGenericMemoryAccess(*ES));

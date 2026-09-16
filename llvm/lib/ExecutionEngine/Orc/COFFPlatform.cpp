@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/Orc/COFFPlatform.h"
-#include "llvm/ExecutionEngine/Orc/Mangling.h"
 
 #include "llvm/ExecutionEngine/Orc/COFF.h"
 #include "llvm/ExecutionEngine/Orc/CallProxiesSPS.h"
@@ -193,10 +192,9 @@ COFFPlatform::Create(ObjectLinkingLayer &ObjLinkingLayer, JITDylib &PlatformJD,
 
   {
     // Add JIT dispatch reexports from bootstrap JITDylib.
-    MangleAndInterner Mangle(ES);
     auto Exports = buildSimpleReexportsAliasMap(
         ES.getBootstrapJITDylib(),
-        {{Mangle(rt::DispatchName), Mangle(rt::DispatchCtxName)}});
+        {{ES.intern(rt::DispatchName), ES.intern(rt::DispatchCtxName)}});
     if (!Exports)
       return Exports.takeError();
     if (auto Err =
@@ -682,25 +680,18 @@ Error COFFPlatform::bootstrapCOFFRuntime(JITDylib &PlatformJD) {
   // Lookup of runtime symbols causes the collection of initializers if
   // it's static linking setting.
   if (auto Err = lookupAndApply(
-          PlatformJD,
-          {recordAddr(
-               SymbolNameSpec::verbatim("__orc_rt_coff_platform_bootstrap"),
-               &orc_rt_coff_platform_bootstrap),
-           recordAddr(
-               SymbolNameSpec::verbatim("__orc_rt_coff_platform_shutdown"),
-               &orc_rt_coff_platform_shutdown),
-           recordAddr(
-               SymbolNameSpec::verbatim("__orc_rt_coff_register_jitdylib"),
-               &orc_rt_coff_register_jitdylib),
-           recordAddr(
-               SymbolNameSpec::verbatim("__orc_rt_coff_deregister_jitdylib"),
-               &orc_rt_coff_deregister_jitdylib),
-           recordAddr(SymbolNameSpec::verbatim(
-                          "__orc_rt_coff_register_object_sections"),
-                      &orc_rt_coff_register_object_sections),
-           recordAddr(SymbolNameSpec::verbatim(
-                          "__orc_rt_coff_deregister_object_sections"),
-                      &orc_rt_coff_deregister_object_sections)}))
+          PlatformJD, {recordAddr("__orc_rt_coff_platform_bootstrap",
+                                  &orc_rt_coff_platform_bootstrap),
+                       recordAddr("__orc_rt_coff_platform_shutdown",
+                                  &orc_rt_coff_platform_shutdown),
+                       recordAddr("__orc_rt_coff_register_jitdylib",
+                                  &orc_rt_coff_register_jitdylib),
+                       recordAddr("__orc_rt_coff_deregister_jitdylib",
+                                  &orc_rt_coff_deregister_jitdylib),
+                       recordAddr("__orc_rt_coff_register_object_sections",
+                                  &orc_rt_coff_register_object_sections),
+                       recordAddr("__orc_rt_coff_deregister_object_sections",
+                                  &orc_rt_coff_deregister_object_sections)}))
     return Err;
 
   // Call bootstrap functions
@@ -738,9 +729,8 @@ Error COFFPlatform::runSymbolIfExists(JITDylib &PlatformJD,
                                       StringRef SymbolName) {
   ExecutorAddr TargetFn;
   if (auto Err = lookupAndApply(
-          PlatformJD,
-          {recordAddr(SymbolNameSpec::verbatim(SymbolName), &TargetFn,
-                      SymbolLookupFlags::WeaklyReferencedSymbol)}))
+          PlatformJD, {recordAddr(SymbolName, &TargetFn,
+                                  SymbolLookupFlags::WeaklyReferencedSymbol)}))
     return Err;
   if (!TargetFn)
     return Error::success(); // No target function.

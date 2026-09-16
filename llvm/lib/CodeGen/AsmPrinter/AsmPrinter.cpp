@@ -2097,9 +2097,7 @@ void AsmPrinter::emitFunctionBody() {
   // Print out code for the function.
   bool HasAnyRealCode = false;
   int NumInstsInFunction = 0;
-  // Only x86 needs this padding; the Arm unwinders back the PC up themselves.
-  bool NeedsEHaNops = MMI->getModule()->getModuleFlag("eh-asynch") &&
-                      TM.getTargetTriple().isX86();
+  bool IsEHa = MMI->getModule()->getModuleFlag("eh-asynch");
 
   const MCSubtargetInfo *STI = nullptr;
   if (this->MF)
@@ -2192,7 +2190,7 @@ void AsmPrinter::emitFunctionBody() {
         //  an EH region as it must be led by at least a Load
         {
           auto MI2 = std::next(MI.getIterator());
-          if (NeedsEHaNops && MI2 != MBB.end() &&
+          if (IsEHa && MI2 != MBB.end() &&
               (MI2->mayLoadOrStore() || MI2->mayRaiseFPException()))
             emitNops(1);
         }

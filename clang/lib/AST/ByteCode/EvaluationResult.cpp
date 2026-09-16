@@ -55,7 +55,8 @@ static bool CheckArrayInitialized(InterpState &S, SourceLocation Loc,
       PtrView ElemPtr = BasePtr.atIndex(I).narrow();
       Result &= CheckFieldsInitialized(S, Loc, ElemPtr, R);
     }
-  } else if (ElemDesc->isArray()) {
+  } else {
+    assert(ElemDesc->isArray());
     for (size_t I = 0; I != NumElems; ++I) {
       PtrView ElemPtr = BasePtr.atIndex(I).narrow();
       Result &= CheckArrayInitialized(S, Loc, ElemPtr);

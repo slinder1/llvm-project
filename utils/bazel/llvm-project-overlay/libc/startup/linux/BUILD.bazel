@@ -16,8 +16,6 @@ package(
     ],
 )
 
-exports_files(["startup_rules.bzl"])
-
 libc_support_library(
     name = "gnu_property_section",
     srcs = ["gnu_property_section.cpp"],
@@ -58,7 +56,6 @@ libc_startup_library(
         "//libc:__support_macros_config",
         "//libc:__support_osutil_linux_auxv",
         "//libc:__support_osutil_syscall",
-        "//libc:__support_threads_tcb",
         "//libc:__support_threads_thread",
         "//libc:__support_threads_thread_headers",
         "//libc:_r_debug",
@@ -87,7 +84,7 @@ libc_startup_library(
 )
 
 merge_relocatable_object(
-    name = "crt1_library",
+    name = "crt1",
     deps = [
         ":do_start",
         ":gnu_property_section",
@@ -102,26 +99,11 @@ merge_relocatable_object(
 )
 
 libc_startup_object(
-    name = "crt1",
-    dep = ":crt1_library",
-)
-
-libc_startup_library(
-    name = "crti_library",
-    srcs = ["crti.cpp"],
-)
-
-libc_startup_object(
     name = "crti",
-    dep = ":crti_library",
-)
-
-libc_startup_library(
-    name = "crtn_library",
-    srcs = ["crtn.cpp"],
+    src = "crti.cpp",
 )
 
 libc_startup_object(
     name = "crtn",
-    dep = ":crtn_library",
+    src = "crtn.cpp",
 )

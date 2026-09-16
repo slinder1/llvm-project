@@ -6450,7 +6450,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
             // unprototyped calls.
             for (const CallArg &Arg : CallArgs)
               ParamTypes.push_back(Arg.getType());
-            CST = CGM.ReconstructCallGraphPrototype(FNPT, ParamTypes);
+            FunctionProtoType::ExtProtoInfo EPI;
+            CST = getContext().getFunctionType(FNPT->getReturnType(),
+                                               ParamTypes, EPI);
           }
 
           llvm::Metadata *MD =

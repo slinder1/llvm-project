@@ -47,7 +47,7 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_uldivmod)
         pop     {r6, r12, lr}
         PAC_RETURN
 #else
-        POP_PC_WITH_REGS r6
+        pop     {r6, pc}
 #endif
 END_COMPILERRT_FUNCTION(__aeabi_uldivmod)
 

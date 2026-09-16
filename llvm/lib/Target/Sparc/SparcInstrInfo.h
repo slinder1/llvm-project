@@ -48,9 +48,6 @@ public:
   ///
   const SparcRegisterInfo &getRegisterInfo() const { return RI; }
 
-  const TargetRegisterClass *
-  getInlineAsmMemoryOperandRegClass(InlineAsm::ConstraintCode C) const override;
-
   /// isLoadFromStackSlot - If the specified machine instruction is a direct
   /// load from a stack slot, return the virtual or physical register number of
   /// the destination along with the FrameIndex of the loaded stack slot.  If

@@ -361,7 +361,8 @@ public:
   WebAssemblyLowerEmscriptenEHSjLjImpl(
       bool EnableEmEH,
       std::function<DominatorTree &(Function &F)> GetDominatorTree)
-      : EnableEmEH(EnableEmEH), EnableEmSjLj(WebAssembly::WasmEnableEmSjLj),
+      : EnableEmEH(EnableEmEH || WebAssembly::WasmEnableEmEH),
+        EnableEmSjLj(WebAssembly::WasmEnableEmSjLj),
         EnableWasmSjLj(WebAssembly::WasmEnableSjLj),
         GetDominatorTree(GetDominatorTree) {
     assert(!(EnableEmSjLj && EnableWasmSjLj) &&
@@ -926,11 +927,6 @@ static void nullifySetjmp(Function *F) {
 
 bool WebAssemblyLowerEmscriptenEHSjLjImpl::runOnModule(Module &M) {
   LLVM_DEBUG(dbgs() << "********** Lower Emscripten EH & SjLj **********\n");
-
-  // The Emscripten EH model may come from the "exception-model" module flag
-  // (e.g. when this pass is run standalone via opt) in addition to being
-  // threaded in from the TargetMachine.
-  EnableEmEH |= M.getExceptionModel() == ExceptionHandling::Emscripten;
 
   LLVMContext &C = M.getContext();
   IRBuilder<> IRB(C);

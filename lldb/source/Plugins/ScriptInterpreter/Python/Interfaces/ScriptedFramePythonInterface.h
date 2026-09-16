@@ -34,8 +34,6 @@ public:
 
   lldb::addr_t GetPC() override;
 
-  lldb::addr_t GetCFA() override;
-
   std::optional<SymbolContext> GetSymbolContext() override;
 
   std::optional<std::string> GetFunctionName() override;
@@ -60,8 +58,6 @@ public:
   lldb::ValueObjectSP
   GetValueObjectForVariableExpression(llvm::StringRef expr, uint32_t options,
                                       Status &status) override;
-  llvm::Expected<ScriptedMetadata>
-  GetThreadPlanMetadataForStepType(lldb::StepType step_type) override;
 
   static void Initialize();
 

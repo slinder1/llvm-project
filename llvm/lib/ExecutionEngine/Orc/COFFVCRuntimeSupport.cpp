@@ -115,16 +115,12 @@ Error COFFVCRuntimeBootstrapper::initializeStaticVCRuntime(JITDylib &JD) {
       jit_scrt_initialize_type_info,
       jit_scrt_initialize_default_local_stdio_options;
   if (auto Err = lookupAndApply(
-          JD, {recordAddr(SymbolNameSpec::verbatim("__scrt_initialize_crt"),
-                          &jit_scrt_initialize),
-               recordAddr(SymbolNameSpec::verbatim(
-                              "__scrt_dllmain_before_initialize_c"),
+          JD, {recordAddr("__scrt_initialize_crt", &jit_scrt_initialize),
+               recordAddr("__scrt_dllmain_before_initialize_c",
                           &jit_scrt_dllmain_before_initialize_c),
-               recordAddr(SymbolNameSpec::verbatim(
-                              "?__scrt_initialize_type_info@@YAXXZ"),
+               recordAddr("?__scrt_initialize_type_info@@YAXXZ",
                           &jit_scrt_initialize_type_info),
-               recordAddr(SymbolNameSpec::verbatim(
-                              "__scrt_initialize_default_local_stdio_options"),
+               recordAddr("__scrt_initialize_default_local_stdio_options",
                           &jit_scrt_initialize_default_local_stdio_options)}))
     return Err;
 

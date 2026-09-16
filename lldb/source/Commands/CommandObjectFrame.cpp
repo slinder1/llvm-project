@@ -1038,10 +1038,11 @@ void CommandObjectFrameRecognizerAdd::DoExecute(Args &command,
         recognizer_sp, module, func, Mangled::NamePreference::ePreferDemangled,
         m_options.m_first_instruction_only);
   } else {
+    auto module = ConstString(m_options.m_module);
     std::vector<ConstString> symbols(m_options.m_symbols.begin(),
                                      m_options.m_symbols.end());
     GetTarget()->GetFrameRecognizerManager().AddRecognizer(
-        recognizer_sp, m_options.m_module, std::move(symbols),
+        recognizer_sp, module, symbols,
         Mangled::NamePreference::ePreferDemangled,
         m_options.m_first_instruction_only);
   }

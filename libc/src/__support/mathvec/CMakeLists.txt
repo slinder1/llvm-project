@@ -233,25 +233,12 @@ add_header_library(
 )
 
 add_header_library(
-  trig_reductionf
-  HDRS
-    trig_reductionf.h
-    trig_reductionf_nofma.h
-  DEPENDS
-    libc.src.__support.CPP.bit
-    libc.src.__support.CPP.simd
-)
-
-add_header_library(
   sinf
   HDRS
     sinf.h
   DEPENDS
-    .trig_reductionf
-    libc.src.__support.CPP.bit
     libc.src.__support.CPP.simd
-    libc.src.__support.FPUtil.fp_bits
-    libc.src.__support.macros.properties.cpu_features
+    libc.src.__support.math.sinf
 )
 
 add_header_library(

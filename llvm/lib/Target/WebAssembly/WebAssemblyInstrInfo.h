@@ -37,9 +37,6 @@ public:
 
   const WebAssemblyRegisterInfo &getRegisterInfo() const { return RI; }
 
-  const TargetRegisterClass *
-  getInlineAsmMemoryOperandRegClass(InlineAsm::ConstraintCode C) const override;
-
   bool isReMaterializableImpl(const MachineInstr &MI) const override;
 
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,

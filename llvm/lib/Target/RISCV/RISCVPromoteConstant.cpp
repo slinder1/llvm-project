@@ -62,8 +62,6 @@ public:
     const TargetMachine &TM = TPC.getTM<TargetMachine>();
     bool Changed = false;
     for (Function &F : M) {
-      if (F.isDeclaration())
-        continue;
       const RISCVSubtarget &ST = TM.getSubtarget<RISCVSubtarget>(F);
       const RISCVTargetLowering *TLI = ST.getTargetLowering();
       Changed |= runOnFunction(F, TLI);

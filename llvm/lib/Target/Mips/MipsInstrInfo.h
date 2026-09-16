@@ -137,9 +137,6 @@ public:
         TargetInstrInfo::getRegisterInfo());
   }
 
-  const TargetRegisterClass *
-  getInlineAsmMemoryOperandRegClass(InlineAsm::ConstraintCode C) const override;
-
   virtual unsigned getOppositeBranchOpc(unsigned Opc) const = 0;
 
   virtual bool isBranchWithImm(unsigned Opc) const {

@@ -137,7 +137,8 @@ int llvm::compileModuleWithNewPM(
 
   MAM.registerPass([&] {
     const TargetOptions &Options = Target->Options;
-    return RuntimeLibraryAnalysis(Options.MCOptions.ABIName, Options.VecLib);
+    return RuntimeLibraryAnalysis(Options.ExceptionModel,
+                                  Options.MCOptions.ABIName, Options.VecLib);
   });
 
   MAM.registerPass([&] { return MachineModuleAnalysis(MMI); });

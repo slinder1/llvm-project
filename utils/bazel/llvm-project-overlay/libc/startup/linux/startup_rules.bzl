@@ -9,42 +9,18 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+load("//libc:libc_build_rules.bzl", "libc_startup_library")
 
-def _get_object_files(deps):
-    """Gets object files that are directly provided by a target in deps.
-
-    Args:
-        deps: Targets from which to extract object files.
-
-    Returns:
-        Tuple of (objects, pic_objects) provided by some target in deps.
-    """
-    objects = []
-    pic_objects = []
+def _get_compilation_outputs(deps):
+    outputs = []
     for dep in deps:
-        if CcInfo not in dep:
-            fail("CcInfo not found in dep {}".format(dep.label))
+        if OutputGroupInfo in dep and "compilation_outputs" in dep[OutputGroupInfo]:
+            outputs.extend(dep[OutputGroupInfo].compilation_outputs.to_list())
+    return outputs
 
-        for linker_input in dep[CcInfo].linking_context.linker_inputs.to_list():
-            if linker_input.owner != dep.label:
-                continue  # Only interested in directly owned linker inputs.
-
-            for lib in linker_input.libraries:
-                objects.extend(lib.objects or [])
-                pic_objects.extend(lib.pic_objects or [])
-
-    return objects, pic_objects
-
-def _libc_startup_object_impl(ctx):
+def _extract_object_file_impl(ctx):
     output = ctx.actions.declare_file(ctx.label.name + ".o")
-    objects, pic_objects = _get_object_files([ctx.attr.dep])
-
-    # Prefer nopic, as LLVM-libc currently only supports static non-PIE linking.
-    # However, if only PIC objects are available, use them. This may happen
-    # in toolchains where --force_pic is active (like llvm-project).
-    #
-    # This will likely need to change when we support Scrt1.o or rcrt1.o.
-    input_objs = objects or pic_objects
+    input_objs = _get_compilation_outputs([ctx.attr.dep])
     if len(input_objs) != 1:
         fail("Expected exactly one input object, got: {}".format(input_objs))
 
@@ -57,8 +33,8 @@ def _libc_startup_object_impl(ctx):
 
     return [DefaultInfo(files = depset([output]))]
 
-libc_startup_object = rule(
-    implementation = _libc_startup_object_impl,
+_extract_object_file = rule(
+    implementation = _extract_object_file_impl,
     attrs = {
         "dep": attr.label(
             mandatory = True,
@@ -66,6 +42,25 @@ libc_startup_object = rule(
         ),
     },
 )
+
+def libc_startup_object(name, src, **kwargs):
+    """Compiles a C++ source file into a startup object file.
+
+    Args:
+        name: The name of the target.
+        src: The C++ source file to compile.
+        **kwargs: Other arguments to
+    """
+    library_name = name + "_lib"
+    libc_startup_library(
+        name = library_name,
+        srcs = [src],
+        **kwargs
+    )
+    _extract_object_file(
+        name = name,
+        dep = ":" + library_name,
+    )
 
 def _filter_flags(
         flags,
@@ -101,53 +96,11 @@ def _filter_flags(
 
     return filtered_flags
 
-def _indirect_deps_linking_context(deps):
-    """Creates a linking context with indirect inputs from deps."""
-    direct_dep_labels = set([dep.label for dep in deps])
-    indirect_dep_linker_inputs = [
-        linker_input
-        for dep in deps
-        for linker_input in dep[CcInfo].linking_context.linker_inputs.to_list()
-        if linker_input.owner not in direct_dep_labels
-    ]
-    return cc_common.create_linking_context(
-        linker_inputs = depset(indirect_dep_linker_inputs),
-    )
-
-def _create_merged_relocatable_object(
-        ctx,
-        inputs,
-        output,
-        linker,
-        link_flags,
-        cc_toolchain):
-    """Configures an action to execute a relocatable link."""
-    args = ctx.actions.args()
-    args.add_all(link_flags)
-
-    bindir = paths.dirname(linker)
-    if bindir:
-        args.add("-B" + bindir)
-
-    args.add("-r")
-    args.add("-nostdlib")
-    args.add("-o", output)
-    args.add_all(inputs)
-
-    ctx.actions.run(
-        outputs = [output],
-        inputs = depset(
-            inputs,
-            transitive = [cc_toolchain.all_files],
-        ),
-        executable = linker,
-        arguments = [args],
-        mnemonic = "MergeRelocatableObject",
-        use_default_shell_env = True,
-    )
-
 def _merge_relocatable_object_impl(ctx):
     cc_toolchain = find_cc_toolchain(ctx)
+    output = ctx.actions.declare_file(ctx.label.name + ".o")
+
+    input_objs = _get_compilation_outputs(ctx.attr.deps)
 
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
@@ -175,53 +128,31 @@ def _merge_relocatable_object_impl(ctx):
         ["-fuse-ld=", "-m", "--target=", "--sysroot="],
     )
 
-    objects, pic_objects = _get_object_files(ctx.attr.deps)
-    merged_pic_object = None
-    merged_object = None
+    args = ctx.actions.args()
+    args.add_all(relocatable_link_flags)
 
-    if objects:
-        merged_object = ctx.actions.declare_file(ctx.label.name + ".o")
-        _create_merged_relocatable_object(
-            ctx,
-            inputs = objects,
-            output = merged_object,
-            linker = linker,
-            link_flags = relocatable_link_flags,
-            cc_toolchain = cc_toolchain,
-        )
+    bindir = paths.dirname(linker)
+    if bindir:
+        args.add("-B" + bindir)
 
-    if pic_objects:
-        merged_pic_object = ctx.actions.declare_file(ctx.label.name + ".pic.o")
-        _create_merged_relocatable_object(
-            ctx,
-            inputs = pic_objects,
-            output = merged_pic_object,
-            linker = linker,
-            link_flags = relocatable_link_flags,
-            cc_toolchain = cc_toolchain,
-        )
+    args.add("-r")
+    args.add("-nostdlib")
+    args.add("-o", output)
+    args.add_all(input_objs)
 
-    linking_context, _ = cc_common.create_linking_context_from_compilation_outputs(
-        name = ctx.label.name,
-        actions = ctx.actions,
-        feature_configuration = feature_configuration,
-        cc_toolchain = cc_toolchain,
-        compilation_outputs = cc_common.create_compilation_outputs(
-            objects = depset([merged_object]) if merged_object else None,
-            pic_objects = depset([merged_pic_object]) if merged_pic_object else None,
+    ctx.actions.run(
+        outputs = [output],
+        inputs = depset(
+            input_objs,
+            transitive = [cc_toolchain.all_files],
         ),
-        linking_contexts = [
-            # Propagate transitive linking contexts from deps.
-            # We only propagate indirect transitive dependencies because
-            # the merged object file will contain symbols from direct deps.
-            _indirect_deps_linking_context(ctx.attr.deps),
-        ],
+        executable = linker,
+        arguments = [args],
+        mnemonic = "MergeRelocatableObject",
+        use_default_shell_env = True,
     )
-    files = depset([o for o in [merged_object, merged_pic_object] if o])
-    return [
-        DefaultInfo(files = files),
-        CcInfo(linking_context = linking_context),
-    ]
+
+    return [DefaultInfo(files = depset([output]))]
 
 merge_relocatable_object = rule(
     implementation = _merge_relocatable_object_impl,
@@ -239,5 +170,4 @@ merge_relocatable_object = rule(
     },
     toolchains = use_cc_toolchain(),
     fragments = ["cpp"],
-    provides = [DefaultInfo, CcInfo],
 )

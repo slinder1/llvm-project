@@ -155,36 +155,30 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       if (OpR->isSubClassOf("RegisterOperand"))
         OpR = OpR->getValueAsDef("RegClass");
 
-      if (OpR->isSubClassOf("RegClassByHwMode") &&
-          !OpR->getValueAsListOfDefs("Objects").empty()) {
+      if (OpR->isSubClassOf("RegClassByHwMode")) {
         Res += Namespace;
         Res += "::";
         Res += OpR->getName();
         Res += ", ";
-      } else if (OpR->isSubClassOf("RegClassByHwMode")) {
-        // An empty RegClassByHwMode is the generic ptr_rc placeholder. It must
-        // be substituted with a real class per target (via
-        // RemapAllTargetPseudoPointerOperands); reaching here means it was not.
+      } else if (OpR->isSubClassOf("RegisterClass"))
+        Res += getQualifiedName(OpR) + "RegClassID, ";
+      else if (OpR->isSubClassOf("PointerLikeRegClass")) {
         if (Inst.isPseudo) {
           // TODO: Verify this is a fixed pseudo
           PrintError(Inst.TheDef,
                      "missing target override for pseudoinstruction "
-                     "using ptr_rc");
+                     "using PointerLikeRegClass");
           PrintNote(OpR->getLoc(),
                     "target should define equivalent instruction "
                     "with RegisterClassLike replacement; (use "
                     "RemapAllTargetPseudoPointerOperands?)");
         } else {
-          PrintError(Inst.TheDef, "non-pseudoinstruction user of ptr_rc");
+          PrintError(Inst.TheDef,
+                     "non-pseudoinstruction user of PointerLikeRegClass");
         }
+      } else
         // -1 means the operand does not have a fixed register class.
         Res += "-1, ";
-      } else if (OpR->isSubClassOf("RegisterClass")) {
-        Res += getQualifiedName(OpR) + "RegClassID, ";
-      } else {
-        // -1 means the operand does not have a fixed register class.
-        Res += "-1, ";
-      }
 
       // Fill in applicable flags.
       Res += "0";

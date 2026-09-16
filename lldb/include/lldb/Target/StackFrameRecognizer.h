@@ -112,7 +112,7 @@ public:
   /// \param symbol_mangling controls whether the symbol name should be
   /// compared to the mangled or demangled name.
   void AddRecognizer(lldb::StackFrameRecognizerSP recognizer,
-                     std::string module, std::vector<ConstString> symbols,
+                     ConstString module, llvm::ArrayRef<ConstString> symbols,
                      Mangled::NamePreference symbol_mangling,
                      bool first_instruction_only = true);
 
@@ -153,7 +153,7 @@ private:
     uint32_t recognizer_id;
     lldb::StackFrameRecognizerSP recognizer;
     bool is_regexp;
-    std::string module;
+    ConstString module;
     lldb::RegularExpressionSP module_regexp;
     std::vector<ConstString> symbols;
     lldb::RegularExpressionSP symbol_regexp;

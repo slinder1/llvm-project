@@ -7,9 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/Orc/TargetProcess/SimpleExecutorMemoryManager.h"
-#include "llvm/ExecutionEngine/Orc/Shared/Mangler.h"
-#include "llvm/TargetParser/Host.h"
-#include "llvm/TargetParser/Triple.h"
 
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ExecutionEngine/Orc/Shared/SPSCI/SimpleNativeMemoryMapSPSCI.h"
@@ -201,18 +198,13 @@ Error SimpleExecutorMemoryManager::shutdown() {
 
 void SimpleExecutorMemoryManager::addBootstrapSymbols(
     StringMap<ExecutorAddr> &M) {
-  Mangler Mangle{Triple(sys::getProcessTriple())};
   namespace sps_ci = rt::sps_ci;
-  M[Mangle.mangledCopy(sps_ci::SimpleNativeMemoryMapInstanceName)] =
-      ExecutorAddr::fromPtr(this);
-  M[Mangle.mangledCopy(sps_ci::MemMgrReserve::Name)] =
-      ExecutorAddr::fromPtr(reserveWrapper);
-  M[Mangle.mangledCopy(sps_ci::MemMgrInitialize::Name)] =
-      ExecutorAddr::fromPtr(initializeWrapper);
-  M[Mangle.mangledCopy(sps_ci::MemMgrDeinitialize::Name)] =
+  M[sps_ci::SimpleNativeMemoryMapInstanceName] = ExecutorAddr::fromPtr(this);
+  M[sps_ci::MemMgrReserve::Name] = ExecutorAddr::fromPtr(reserveWrapper);
+  M[sps_ci::MemMgrInitialize::Name] = ExecutorAddr::fromPtr(initializeWrapper);
+  M[sps_ci::MemMgrDeinitialize::Name] =
       ExecutorAddr::fromPtr(deinitializeWrapper);
-  M[Mangle.mangledCopy(sps_ci::MemMgrRelease::Name)] =
-      ExecutorAddr::fromPtr(releaseWrapper);
+  M[sps_ci::MemMgrRelease::Name] = ExecutorAddr::fromPtr(releaseWrapper);
 }
 
 Expected<SimpleExecutorMemoryManager::SlabInfo &>

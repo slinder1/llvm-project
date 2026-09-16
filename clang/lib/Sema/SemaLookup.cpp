@@ -4262,10 +4262,7 @@ private:
             // there anyway.
             continue;
           }
-          // Look through an alias template, whose TemplateName is a
-          // TypeAliasTemplateDecl rather than the ClassTemplateDecl we are
-          // after; otherwise the base is skipped entirely.
-          const auto *TST = BaseType->getAsNonAliasTemplateSpecializationType();
+          const auto *TST = BaseType->getAs<TemplateSpecializationType>();
           if (!TST)
             continue;
           TemplateName TN = TST->getTemplateName();

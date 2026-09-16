@@ -280,8 +280,10 @@ static void createNewAliasScopesFromNoAliasParameter(
   SetVector<LLVM::SSACopyOp> ssaCopies;
   SetVector<LLVM::SSACopyOp> noAliasParams;
   for (Value argument : cast<LLVM::CallOp>(call).getArgOperands()) {
-    for (auto ssaCopy :
-         llvm::make_isa_range<LLVM::SSACopyOp>(argument.getUsers())) {
+    for (Operation *user : argument.getUsers()) {
+      auto ssaCopy = llvm::dyn_cast<LLVM::SSACopyOp>(user);
+      if (!ssaCopy)
+        continue;
       ssaCopies.insert(ssaCopy);
 
       if (!ssaCopy->hasDiscardableAttr(LLVM::LLVMDialect::getNoAliasAttrName()))

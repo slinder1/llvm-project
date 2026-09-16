@@ -165,12 +165,9 @@ MCSymbolWasm *WebAssemblyAsmPrinter::getMCSymbolForFunction(
     const Function *F, wasm::WasmSignature *Sig, bool &InvokeDetected) {
   MCSymbolWasm *WasmSym = nullptr;
 
-  // Prefer the "exception-model" module flag, else the TargetOptions default.
-  ExceptionHandling EM = F->getParent()->getExceptionModel();
-  if (EM == ExceptionHandling::Default)
-    EM = TM.getExceptionModel();
   const bool EnableEmEH =
-      EM == ExceptionHandling::Emscripten || WebAssembly::WasmEnableEmSjLj;
+      TM.Options.ExceptionModel == ExceptionHandling::Emscripten ||
+      WebAssembly::WasmEnableEmEH || WebAssembly::WasmEnableEmSjLj;
   if (EnableEmEH && isEmscriptenInvokeName(F->getName())) {
     assert(Sig);
     InvokeDetected = true;

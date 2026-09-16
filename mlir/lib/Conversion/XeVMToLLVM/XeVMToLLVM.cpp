@@ -351,7 +351,11 @@ buildCacheControlPayloads(ArrayRef<Attribute> attrs) {
   SmallVector<std::string> payloads;
   llvm::StringMap<bool> seen;
 
-  for (auto arr : llvm::make_isa_range<ArrayAttr>(attrs)) {
+  for (Attribute a : attrs) {
+    auto arr = dyn_cast<ArrayAttr>(a);
+    if (!arr)
+      continue;
+
     auto vals = arr.getValue();
     assert(vals.size() == 3 &&
            "Expected exactly 3 integer values (Token, CacheLevel, "

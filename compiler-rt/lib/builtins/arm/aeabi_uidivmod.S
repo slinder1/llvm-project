@@ -58,7 +58,7 @@ LOCAL_LABEL(case_denom_larger):
         pop     { r12, lr }
         PAC_RETURN
 #else
-        POP_PC
+        pop     { pc }
 #endif
 #endif
 END_COMPILERRT_FUNCTION(__aeabi_uidivmod)

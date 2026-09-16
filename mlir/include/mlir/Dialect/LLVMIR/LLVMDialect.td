@@ -24,9 +24,7 @@ def LLVM_Dialect : Dialect {
 
   let discardableAttrs = (ins
     /// Attribute encoding size and type of GPU workgroup attributions.
-    "WorkgroupAttributionAttr":$workgroup_attribution,
-    /// Loop metadata attached to operations that do not declare it inherently.
-    "LoopAnnotationAttr":$loop_annotation
+    "WorkgroupAttributionAttr":$workgroup_attribution
   );
 
   let extraClassDeclaration = [{

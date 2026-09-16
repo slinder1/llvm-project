@@ -1449,7 +1449,7 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
         // Get or create the virtual register to hold the pointer or code.  Mark
         // the live in physreg and copy into the vreg.
         MCRegister EHPhysReg = TLI->getExceptionPointerRegister(
-            FuncInfo->ExceptionModel, PersonalityFn);
+            TLI->getTargetMachine().getExceptionModel(), PersonalityFn);
         assert(EHPhysReg && "target lacks exception pointer register");
         MBB->addLiveIn(EHPhysReg);
         Register VReg = FuncInfo->getCatchPadExceptionPointerVReg(CPI, PtrRC);
@@ -1483,11 +1483,11 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
     MF->setCallSiteLandingPad(Label, SDB->LPadToCallSiteMap[MBB]);
     // Mark exception register as live in.
     if (MCRegister Reg = TLI->getExceptionPointerRegister(
-            FuncInfo->ExceptionModel, PersonalityFn))
+            TLI->getTargetMachine().getExceptionModel(), PersonalityFn))
       FuncInfo->ExceptionPointerVirtReg = MBB->addLiveIn(Reg, PtrRC);
     // Mark exception selector register as live in.
     if (MCRegister Reg = TLI->getExceptionSelectorRegister(
-            FuncInfo->ExceptionModel, PersonalityFn))
+            TLI->getTargetMachine().getExceptionModel(), PersonalityFn))
       FuncInfo->ExceptionSelectorVirtReg = MBB->addLiveIn(Reg, PtrRC);
   }
 

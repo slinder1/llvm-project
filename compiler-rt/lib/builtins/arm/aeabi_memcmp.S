@@ -16,7 +16,7 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_memcmp)
 #ifdef USE_THUMB_1
         push    {r7, lr}
         bl      memcmp
-        POP_PC_WITH_REGS r7
+        pop     {r7, pc}
 #else
         b       memcmp
 #endif

@@ -2370,15 +2370,12 @@ Parser::ParseModuleDecl(Sema::ModuleImportState &ImportState) {
     SourceLocation PrivateLoc = ConsumeToken();
     DiagnoseAndSkipCXX11Attributes();
     ExpectAndConsumeSemi(diag::err_private_module_fragment_expected_semi);
-    auto Result = Actions.ActOnPrivateModuleFragmentDecl(ModuleLoc, PrivateLoc);
-    if (Result) {
-      ImportState =
-          ImportState == Sema::ModuleImportState::ImportAllowed
-              ? Sema::ModuleImportState::PrivateFragmentImportAllowed
-              : Sema::ModuleImportState::PrivateFragmentImportFinished;
-    }
-    return nullptr;
+    ImportState = ImportState == Sema::ModuleImportState::ImportAllowed
+                      ? Sema::ModuleImportState::PrivateFragmentImportAllowed
+                      : Sema::ModuleImportState::PrivateFragmentImportFinished;
+    return Actions.ActOnPrivateModuleFragmentDecl(ModuleLoc, PrivateLoc);
   }
+
   SmallVector<IdentifierLoc, 2> Path;
   if (ParseModuleName(ModuleLoc, Path, /*IsImport*/ false))
     return nullptr;

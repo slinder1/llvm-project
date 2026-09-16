@@ -554,8 +554,10 @@ static const char *inferFragType(Operation *op) {
       return inferFragType(userOp);
   }
 
-  for (auto contract :
-       llvm::make_isa_range<vector::ContractionOp>(op->getUsers())) {
+  for (Operation *users : op->getUsers()) {
+    auto contract = dyn_cast<vector::ContractionOp>(users);
+    if (!contract)
+      continue;
     assert(op->getNumResults() == 1);
     if (contract.getLhs() == op->getResult(0))
       return "AOp";

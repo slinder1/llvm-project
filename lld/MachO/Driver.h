@@ -11,7 +11,6 @@
 
 #include "lld/Common/LLVM.h"
 #include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/BinaryFormat/MachO.h"
 #include "llvm/Option/OptTable.h"
@@ -49,9 +48,6 @@ enum {
 void parseLCLinkerOption(llvm::SmallVectorImpl<StringRef> &LCLinkerOptions,
                          InputFile *f, unsigned argc, StringRef data);
 void resolveLCLinkerOptions();
-
-SmallVector<StringRef> getRerootedSearchPaths(StringRef path,
-                                              ArrayRef<StringRef> roots);
 
 std::string createResponseFile(const llvm::opt::InputArgList &args);
 

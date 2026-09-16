@@ -750,10 +750,9 @@ bool AArch64DAGToDAGISel::SelectInlineAsmMemoryOperand(
   case InlineAsm::ConstraintCode::o:
   case InlineAsm::ConstraintCode::Q:
     // We need to make sure that this one operand does not end up in XZR, thus
-    // require the address to be in a pointer register.
-    const TargetInstrInfo *TII = Subtarget->getInstrInfo();
-    const TargetRegisterClass *TRC =
-        TII->getInlineAsmMemoryOperandRegClass(ConstraintID);
+    // require the address to be in a PointerRegClass register.
+    const TargetRegisterInfo *TRI = Subtarget->getRegisterInfo();
+    const TargetRegisterClass *TRC = TRI->getPointerRegClass();
     SDLoc dl(Op);
     SDValue RC = CurDAG->getTargetConstant(TRC->getID(), dl, MVT::i64);
     SDValue NewOp =

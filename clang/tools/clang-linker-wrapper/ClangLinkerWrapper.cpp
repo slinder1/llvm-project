@@ -706,6 +706,9 @@ Expected<StringRef> compileModule(Module &M, OffloadKind Kind) {
       T->createTargetMachine(M.getTargetTriple(), CPU, Features, Options,
                              Reloc::PIC_, M.getCodeModel()));
 
+  if (M.getDataLayout().isDefault())
+    M.setDataLayout(TM->createDataLayout());
+
   int FD = -1;
   auto TempFileOrErr = createOutputFile(
       ExecutableName + "." + getOffloadKindName(Kind) + ".image.wrapper", "o");
@@ -806,10 +809,8 @@ wrapDeviceImages(ArrayRef<std::unique_ptr<MemoryBuffer>> Buffers,
 
   LLVMContext Context;
   Module M("offload.wrapper.module", Context);
-  Triple TheTriple(
-      Args.getLastArgValue(OPT_host_triple_EQ, sys::getDefaultTargetTriple()));
-  M.setTargetTriple(TheTriple);
-  M.setDataLayout(TheTriple.computeDataLayout());
+  M.setTargetTriple(Triple(
+      Args.getLastArgValue(OPT_host_triple_EQ, sys::getDefaultTargetTriple())));
 
   switch (Kind) {
   case OFK_OpenMP:
