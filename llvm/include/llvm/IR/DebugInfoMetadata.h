@@ -29,6 +29,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Discriminator.h"
+#include <array>
 #include <cassert>
 #include <climits>
 #include <cstddef>
@@ -63,6 +64,9 @@
   DEFINE_MDNODE_GET_DISTINCT_TEMPORARY(CLASS, FORMAL, ARGS)
 
 namespace llvm {
+
+template <class NodeTy> struct MDNodeKeyImpl;
+struct DIExpressionSubExpressionInfo;
 
 namespace dwarf {
 enum Tag : uint16_t;
@@ -3481,12 +3485,35 @@ public:
 class DIExpression : public MDNode {
   friend class LLVMContextImpl;
   friend class MDNode;
+  friend struct DIExpressionSubExpressionInfo;
+  friend struct MDNodeKeyImpl<DIExpression>;
 
+  /// A context-owned, uniqued operation and the expression suffix after it.
+  struct SubExpression {
+    std::array<uint64_t, 3> Elements;
+    uint8_t NumElements;
+    const SubExpression *Next;
+
+    SubExpression(ArrayRef<uint64_t> Elements, const SubExpression *Next)
+        : NumElements(static_cast<uint8_t>(Elements.size())), Next(Next) {
+      assert(Elements.size() <= this->Elements.size());
+      llvm::copy(Elements, this->Elements.begin());
+    }
+
+    ArrayRef<uint64_t> elements() const {
+      return ArrayRef(Elements).take_front(NumElements);
+    }
+  };
+  static_assert(std::is_trivially_destructible_v<SubExpression>);
+
+  /// Retained for raw element access and serialization compatibility.
   std::vector<uint64_t> Elements;
+  const SubExpression *SubExpr;
 
-  DIExpression(LLVMContext &C, StorageType Storage, ArrayRef<uint64_t> Elements)
+  DIExpression(LLVMContext &C, StorageType Storage, ArrayRef<uint64_t> Elements,
+               const SubExpression *SubExpr)
       : MDNode(C, DIExpressionKind, Storage, {}),
-        Elements(Elements.begin(), Elements.end()) {}
+        Elements(Elements.begin(), Elements.end()), SubExpr(SubExpr) {}
   ~DIExpression() = default;
 
   LLVM_ABI static DIExpression *getImpl(LLVMContext &Context,
@@ -3532,12 +3559,27 @@ public:
   element_iterator elements_begin() const { return getElements().begin(); }
   element_iterator elements_end() const { return getElements().end(); }
 
+  class expr_op_iterator;
+
   /// A lightweight wrapper around an expression operand.
   ///
-  /// TODO: Store arguments directly and change \a DIExpression to store a
-  /// range of these.
+  /// Operations from a DIExpression refer to its uniqued subexpressions. An
+  /// operand constructed from a raw element pointer retains the flat view used
+  /// by expression cursors over temporary buffers.
   class ExprOperand {
+    friend class DIExpression;
+    friend class expr_op_iterator;
+
+    const SubExpression *SubExpr = nullptr;
     const uint64_t *Op = nullptr;
+
+    explicit ExprOperand(const SubExpression *SubExpr)
+        : SubExpr(SubExpr),
+          Op(SubExpr ? SubExpr->elements().data() : nullptr) {}
+
+    unsigned getNumAvailableElements() const {
+      return SubExpr ? SubExpr->NumElements : getSize();
+    }
 
   public:
     ExprOperand() = default;
@@ -3726,7 +3768,11 @@ public:
 
   /// An iterator for expression operands.
   class expr_op_iterator {
+    friend class DIExpression;
+
     ExprOperand Op;
+
+    explicit expr_op_iterator(const SubExpression *SubExpr) : Op(SubExpr) {}
 
   public:
     using iterator_category = std::input_iterator_tag;
@@ -3760,14 +3806,19 @@ public:
     expr_op_iterator getNext() const { return ++expr_op_iterator(*this); }
 
     bool operator==(const expr_op_iterator &X) const {
-      return getBase() == X.getBase();
+      return Op.SubExpr == X.Op.SubExpr && getBase() == X.getBase();
     }
     bool operator!=(const expr_op_iterator &X) const {
-      return getBase() != X.getBase();
+      return !(*this == X);
     }
 
   private:
-    void increment() { Op = ExprOperand(getBase() + Op.getSize()); }
+    void increment() {
+      if (Op.SubExpr)
+        Op = ExprOperand(Op.SubExpr->Next);
+      else
+        Op = ExprOperand(getBase() + Op.getSize());
+    }
   };
 
   /// Visit the elements via ExprOperand wrappers.
@@ -3779,11 +3830,9 @@ public:
   /// \pre \a isValid() gives \c true.
   /// @{
   expr_op_iterator expr_op_begin() const {
-    return expr_op_iterator(elements_begin());
+    return expr_op_iterator(SubExpr);
   }
-  expr_op_iterator expr_op_end() const {
-    return expr_op_iterator(elements_end());
-  }
+  expr_op_iterator expr_op_end() const { return expr_op_iterator(); }
   iterator_range<expr_op_iterator> expr_ops() const {
     return {expr_op_begin(), expr_op_end()};
   }

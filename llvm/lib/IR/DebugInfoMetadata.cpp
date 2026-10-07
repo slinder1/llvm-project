@@ -1700,27 +1700,64 @@ DILabel *DILabel::getImpl(LLVMContext &Context, Metadata *Scope, MDString *Name,
 DIExpression *DIExpression::getImpl(LLVMContext &Context,
                                     ArrayRef<uint64_t> Elements,
                                     StorageType Storage, bool ShouldCreate) {
-  DEFINE_GETIMPL_LOOKUP(DIExpression, (Elements));
-  DEFINE_GETIMPL_STORE_NO_OPS(DIExpression, (Elements));
+  SmallVector<ArrayRef<uint64_t>, 8> Operations;
+  for (ArrayRef<uint64_t> Remaining = Elements; !Remaining.empty();) {
+    unsigned Size = ExprOperand(Remaining.data()).getSize();
+    // Malformed expressions are diagnosed by isValid(), so retain a truncated
+    // final operation rather than rejecting it during metadata construction.
+    Size = std::min<size_t>(Size, Remaining.size());
+    Operations.push_back(Remaining.take_front(Size));
+    Remaining = Remaining.drop_front(Size);
+  }
+
+  const SubExpression *SubExpr = nullptr;
+  for (ArrayRef<uint64_t> Operation : llvm::reverse(Operations)) {
+    DIExpressionSubExpressionInfo::KeyTy Key(Operation, SubExpr);
+    auto &SubExpressions = Context.pImpl->DIExpressionSubExpressions;
+    if (!ShouldCreate) {
+      auto I = SubExpressions.find_as(Key);
+      if (I == SubExpressions.end())
+        return nullptr;
+      SubExpr = *I;
+      continue;
+    }
+
+    auto [I, Inserted] = SubExpressions.insert_as(nullptr, Key);
+    if (Inserted) {
+      void *Mem = Context.pImpl->Alloc.Allocate(sizeof(SubExpression),
+                                                alignof(SubExpression));
+      auto *NewSubExpr = new (Mem) SubExpression(Operation, SubExpr);
+      *I = NewSubExpr;
+    }
+    SubExpr = *I;
+  }
+
+  DEFINE_GETIMPL_LOOKUP(DIExpression, (static_cast<const void *>(SubExpr)));
+  DEFINE_GETIMPL_STORE_NO_OPS(DIExpression, (Elements, SubExpr));
 }
 bool DIExpression::isEntryValue() const {
-  if (auto singleLocElts = getSingleLocationExpressionElements()) {
-    return singleLocElts->size() > 0 &&
-           (*singleLocElts)[0] == dwarf::DW_OP_LLVM_entry_value;
-  }
-  return false;
+  if (!isSingleLocationExpression())
+    return false;
+  auto I = expr_op_begin(), E = expr_op_end();
+  if (I != E && isa<ArgOp>(*I))
+    ++I;
+  return I != E && I->is(dwarf::DW_OP_LLVM_entry_value);
 }
 bool DIExpression::startsWithDeref() const {
-  if (auto singleLocElts = getSingleLocationExpressionElements())
-    return singleLocElts->size() > 0 &&
-           (*singleLocElts)[0] == dwarf::DW_OP_deref;
-  return false;
+  if (!isSingleLocationExpression())
+    return false;
+  auto I = expr_op_begin(), E = expr_op_end();
+  if (I != E && isa<ArgOp>(*I))
+    ++I;
+  return I != E && I->is(dwarf::DW_OP_deref);
 }
 bool DIExpression::isDeref() const {
-  if (auto singleLocElts = getSingleLocationExpressionElements())
-    return singleLocElts->size() == 1 &&
-           (*singleLocElts)[0] == dwarf::DW_OP_deref;
-  return false;
+  if (!isSingleLocationExpression())
+    return false;
+  auto I = expr_op_begin(), E = expr_op_end();
+  if (I != E && isa<ArgOp>(*I))
+    ++I;
+  return I != E && I->is(dwarf::DW_OP_deref) && I.getNext() == E;
 }
 
 DIAssignID *DIAssignID::getImpl(LLVMContext &Context, StorageType Storage,
@@ -1801,7 +1838,7 @@ bool DIExpression::PlusUconstOp::classof(const ExprOperand *Op) {
 bool DIExpression::isValid() const {
   for (auto I = expr_op_begin(), E = expr_op_end(); I != E; ++I) {
     // Check that there's space for the operand.
-    if (I->get() + I->getSize() > E->get())
+    if (I->getNumAvailableElements() != I->getSize())
       return false;
 
     uint64_t Op = I->getOp();
@@ -1815,10 +1852,10 @@ bool DIExpression::isValid() const {
       return false;
     case dwarf::DW_OP_LLVM_fragment:
       // A fragment operator must appear at the end.
-      return I->get() + I->getSize() == E->get();
+      return I.getNext() == E;
     case dwarf::DW_OP_stack_value: {
       // Must be the last one or followed by a DW_OP_LLVM_fragment.
-      if (I->get() + I->getSize() == E->get())
+      if (I.getNext() == E)
         break;
       auto J = I;
       if ((++J)->getOp() != dwarf::DW_OP_LLVM_fragment)
@@ -1846,7 +1883,7 @@ bool DIExpression::isValid() const {
       auto FirstOp = expr_op_begin();
       if (auto Arg = dyn_cast<ArgOp>(*FirstOp); Arg && Arg.getIndex() == 0)
         ++FirstOp;
-      if (I->get() != FirstOp->get() ||
+      if (I != FirstOp ||
           cast<EntryValueOp>(*I).getNumOperations() != 1)
         return false;
       break;
@@ -2367,9 +2404,8 @@ DIExpression *DIExpression::appendToStack(const DIExpression *Expr,
                       }) &&
          "Can't append this op");
 
-  // DIExpression stores opcodes and their arguments in a flat array. Walk the
-  // parsed operations to find the last opcode that determines whether the
-  // expression already ends in DW_OP_stack_value.
+  // Find the last opcode that determines whether the expression already ends
+  // in DW_OP_stack_value.
   std::optional<uint64_t> LastValueOp;
   for (auto Op : Expr->expr_ops()) {
     if (Op.isNonEmitting() || Op.getOp() == dwarf::DW_OP_LLVM_fragment)
@@ -2614,22 +2650,26 @@ DIExpression::isConstant() const {
   // An unsigned constant can be represented as
   // DW_OP_constu C DW_OP_stack_value (DW_OP_LLVM_fragment of Len).
 
-  if ((getNumElements() != 2 && getNumElements() != 3 &&
-       getNumElements() != 6) ||
-      (getElement(0) != dwarf::DW_OP_consts &&
-       getElement(0) != dwarf::DW_OP_constu))
+  auto I = expr_op_begin(), E = expr_op_end();
+  if (I == E || I->getNumAvailableElements() != I->getSize() ||
+      (!I->is(dwarf::DW_OP_consts) && !I->is(dwarf::DW_OP_constu)))
     return std::nullopt;
 
-  if (getNumElements() == 2 && getElement(0) == dwarf::DW_OP_consts)
-    return SignedOrUnsignedConstant::SignedConstant;
+  SignedOrUnsignedConstant Kind =
+      I->is(dwarf::DW_OP_constu) ? SignedOrUnsignedConstant::UnsignedConstant
+                                 : SignedOrUnsignedConstant::SignedConstant;
+  if (++I == E)
+    return Kind;
 
-  if ((getNumElements() == 3 && getElement(2) != dwarf::DW_OP_stack_value) ||
-      (getNumElements() == 6 && (getElement(2) != dwarf::DW_OP_stack_value ||
-                                 getElement(3) != dwarf::DW_OP_LLVM_fragment)))
+  if (!I->is(dwarf::DW_OP_stack_value))
     return std::nullopt;
-  return getElement(0) == dwarf::DW_OP_constu
-             ? SignedOrUnsignedConstant::UnsignedConstant
-             : SignedOrUnsignedConstant::SignedConstant;
+  if (++I == E)
+    return Kind;
+
+  if (I->getNumAvailableElements() != I->getSize() ||
+      !I->is(dwarf::DW_OP_LLVM_fragment) || ++I != E)
+    return std::nullopt;
+  return Kind;
 }
 
 DIExpression::ExtOps DIExpression::getExtOps(unsigned FromSize, unsigned ToSize,

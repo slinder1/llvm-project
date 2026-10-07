@@ -1050,7 +1050,7 @@ void DwarfCompileUnit::applyConcreteDbgVariableAttributes(
   // Emit each expression as: EntryValue(Register) <other ops> <Fragment>.
   for (auto [Register, Expr] : EntryValue.EntryValues) {
     DwarfExpr.addFragmentOffset(&Expr);
-    DIExpressionCursor Cursor(Expr.getElements());
+    DIExpressionCursor Cursor(&Expr);
     DwarfExpr.beginEntryValueExpression(Cursor);
     DwarfExpr.addMachineRegExpression(
         *Asm->MF->getSubtarget().getRegisterInfo(), Cursor, Register);

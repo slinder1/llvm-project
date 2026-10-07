@@ -1331,16 +1331,16 @@ template <> struct MDNodeKeyImpl<DILabel> {
 };
 
 template <> struct MDNodeKeyImpl<DIExpression> {
-  ArrayRef<uint64_t> Elements;
+  const void *SubExpr;
 
-  MDNodeKeyImpl(ArrayRef<uint64_t> Elements) : Elements(Elements) {}
-  MDNodeKeyImpl(const DIExpression *N) : Elements(N->getElements()) {}
+  MDNodeKeyImpl(const void *SubExpr) : SubExpr(SubExpr) {}
+  MDNodeKeyImpl(const DIExpression *N) : SubExpr(N->SubExpr) {}
 
   bool isKeyOf(const DIExpression *RHS) const {
-    return Elements == RHS->getElements();
+    return SubExpr == RHS->SubExpr;
   }
 
-  unsigned getHashValue() const { return hash_combine_range(Elements); }
+  unsigned getHashValue() const { return hash_value(SubExpr); }
 };
 
 template <> struct MDNodeKeyImpl<DIGlobalVariableExpression> {
@@ -1525,6 +1525,34 @@ struct DIArgListInfo {
   }
 };
 
+struct DIExpressionSubExpressionInfo {
+  struct KeyTy {
+    ArrayRef<uint64_t> Elements;
+    const void *Next;
+
+    KeyTy(ArrayRef<uint64_t> Elements, const void *Next)
+        : Elements(Elements), Next(Next) {}
+  };
+
+  static unsigned getHashValue(const KeyTy &Key) {
+    return hash_combine(hash_combine_range(Key.Elements), Key.Next);
+  }
+
+  static unsigned getHashValue(const DIExpression::SubExpression *SubExpr) {
+    return getHashValue(KeyTy(SubExpr->elements(), SubExpr->Next));
+  }
+
+  static bool isEqual(const KeyTy &LHS,
+                      const DIExpression::SubExpression *RHS) {
+    return LHS.Next == RHS->Next && LHS.Elements == RHS->elements();
+  }
+
+  static bool isEqual(const DIExpression::SubExpression *LHS,
+                      const DIExpression::SubExpression *RHS) {
+    return LHS == RHS;
+  }
+};
+
 /// DenseMapInfo for MDNode subclasses.
 template <class NodeTy> struct MDNodeInfo {
   using KeyTy = MDNodeKeyImpl<NodeTy>;
@@ -1636,6 +1664,8 @@ public:
   DenseMap<Value *, ValueAsMetadata *> ValuesAsMetadata;
   DenseMap<Metadata *, MetadataAsValue *> MetadataAsValues;
   DenseSet<DIArgList *, DIArgListInfo> DIArgLists;
+  DenseSet<DIExpression::SubExpression *, DIExpressionSubExpressionInfo>
+      DIExpressionSubExpressions;
 
   uint32_t NextMetadataPrintID = 0;
 
